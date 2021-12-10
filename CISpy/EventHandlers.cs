@@ -10,7 +10,6 @@ namespace CISpy
 	partial class EventHandlers
 	{
 		internal static Dictionary<Player, bool> spies = new Dictionary<Player, bool> ();
-		private List<Player> ffPlayers = new List<Player>();
 
 		private bool isDisplayFriendly = false;
 		//private bool isDisplaySpy = false;
@@ -20,7 +19,7 @@ namespace CISpy
 		public void OnRoundStart()
 		{
 			spies.Clear();
-			ffPlayers.Clear();
+			CISpy.FFGrants.Clear();
 			if (rand.Next(1, 101) <= CISpy.instance.Config.GuardSpawnChance)
 			{
 				Player player = Player.List.FirstOrDefault(x => x.Role == RoleType.FacilityGuard);
@@ -67,8 +66,9 @@ namespace CISpy
 					{
 						MakeSpy(ev.Player);
 					});
-					RoundSummary.escaped_scientists--;
-					RoundSummary.escaped_ds++;
+					RoundSummary.EscapedScientists--;
+					RoundSummary.EscapedClassD++;
+
 				});
 			}
 		}
@@ -81,8 +81,14 @@ namespace CISpy
 			}
 		}
 
+		public void OnRoleChange(ChangingRoleEventArgs ev)
+        {
+			CheckSpies();
+		}
+
 		public void OnPlayerDie(DiedEventArgs ev)
 		{
+
 			if (spies.ContainsKey(ev.Target))
 			{
 				spies.Remove(ev.Target);
@@ -107,15 +113,7 @@ namespace CISpy
 
 		public void OnPlayerHurt(HurtingEventArgs ev)
 		{
-			if (ffPlayers.Contains(ev.Attacker))
-			{
-				Timing.CallDelayed(0.1f, () =>
-				{
-					RemoveFF(ev.Attacker);
-				});
-			}
-
-			Player scp035 = null;
+			List<Player> scp035 = null;
 
 			try
 			{
@@ -126,65 +124,51 @@ namespace CISpy
 				Log.Debug("SCP-035 not installed, skipping method call...");
 			}
 
-			if (spies.ContainsKey(ev.Target) && !spies.ContainsKey(ev.Attacker) && ev.Target.Id != ev.Attacker.Id && (ev.Attacker.Team == Team.CHI || ev.Attacker.Team == Team.CDP) &&  ev.Attacker.Id != scp035?.Id)
+			if (ev.Attacker == null || ev.Target == null) return;
+
+			if (spies.ContainsKey(ev.Attacker) && !spies.ContainsKey(ev.Target) && (ev.Target.Team == Team.RSC || ev.Target.Team == Team.MTF) && !scp035.Contains(ev.Target))
+			{
+				if (!spies[ev.Attacker])
+				{
+					spies[ev.Attacker] = true;
+				}
+				CISpy.FFGrants.Add(ev.Handler.Base.GetHashCode());
+			}
+			else if (spies.ContainsKey(ev.Target) && !spies.ContainsKey(ev.Attacker) && (ev.Attacker.Team == Team.MTF || ev.Attacker.Team == Team.RSC))
+			{
+				if (spies[ev.Target])
+				{
+					CISpy.FFGrants.Add(ev.Handler.Base.GetHashCode());
+				}
+			}
+		}
+
+		public void OnShoot(ShotEventArgs ev)
+		{
+			if (ev.Target == null || ev.Shooter == null) return;
+
+			List<Player> scp035 = null;
+
+			if (CISpy.isScp035)
+			{
+				scp035 = TryGet035();
+			}
+			 
+			if (spies.ContainsKey(ev.Target) && !spies.ContainsKey(ev.Shooter) && ev.Target.Id != ev.Shooter.Id && (ev.Shooter.Team == Team.CHI || ev.Shooter.Team == Team.CDP) && !scp035.Contains(ev.Shooter))
 			{
 				if (!isDisplayFriendly)
 				{
-					ev.Attacker.Broadcast(3, "<i>You are shooting a <b><color=\"green\">CISpy!</color></b></i>");
 					isDisplayFriendly = true;
 				}
 				Timing.CallDelayed(3f, () =>
 				{
 					isDisplayFriendly = false;
 				});
-				ev.IsAllowed = false;
+				ev.CanHurt = false;
 			}
-			else if (!spies.ContainsKey(ev.Target) && spies.ContainsKey(ev.Attacker) && (ev.Target.Team == Team.CHI || ev.Target.Team == Team.CDP) && ev.Target.Id != scp035?.Id)
+			else if (!spies.ContainsKey(ev.Target) && spies.ContainsKey(ev.Shooter) && (ev.Target.Team == Team.CHI || ev.Target.Team == Team.CDP) && !scp035.Contains(ev.Shooter))
 			{
-				ev.IsAllowed = false;
-			}
-			/*else if (spies.ContainsKey(ev.Attacker) && spies.ContainsKey(ev.Player))
-			{
-				if (!isDisplaySpy)
-				{
-					ev.Attacker.Broadcast(3, "You are shooting another <b><color=\"green\">CISpy!</color></b>", false);
-					isDisplaySpy = true;
-				}
-				Timing.CallDelayed(3f, () =>
-				{
-					isDisplaySpy = false;
-				});
-				ev.Amount = 0;
-			}*/ 
-		}
-
-		public void OnShoot(ShootingEventArgs ev)
-		{
-			Player target = Player.Get(ev.TargetNetId);
-			if (target == null) return;
-
-			Player scp035 = null;
-
-			if (CISpy.isScp035)
-			{
-				scp035 = TryGet035();
-			}
-
-			if (spies.ContainsKey(ev.Shooter) && !spies.ContainsKey(target) && (target.Team == Team.RSC || target.Team == Team.MTF) && target.Id != scp035?.Id)
-			{
-				if (!spies[ev.Shooter])
-				{
-					spies[ev.Shooter] = true;
-					ev.Shooter.Broadcast(10, $"<i>You have attacked a {(target.Team == Team.MTF ? "<color=#00b0fc>Nine Tailed Fox" : "<color=#fcff8d>Scientist")}</color>, you are now able to be killed by <color=#00b0fc>Nine Tailed Fox</color> and <color=#fcff8d>Scientists</color>.</i>");
-				}
-				GrantFF(ev.Shooter);
-			}
-			else if (spies.ContainsKey(target) && !spies.ContainsKey(ev.Shooter) && (ev.Shooter.Team == Team.MTF || ev.Shooter.Team == Team.RSC))
-			{
-				if (spies[target])
-				{
-					GrantFF(ev.Shooter);
-				}
+				ev.CanHurt = false;
 			}
 		}
 	}
