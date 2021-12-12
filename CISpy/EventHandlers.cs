@@ -81,11 +81,6 @@ namespace CISpy
 			}
 		}
 
-		public void OnRoleChange(ChangingRoleEventArgs ev)
-        {
-			CheckSpies();
-		}
-
 		public void OnPlayerDie(DiedEventArgs ev)
 		{
 

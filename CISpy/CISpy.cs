@@ -37,7 +37,6 @@ namespace CISpy
 			Exiled.Events.Handlers.Player.Left += ev.OnPlayerLeave;
 			Exiled.Events.Handlers.Player.Handcuffing += ev.OnHandcuffing;
 			Exiled.Events.Handlers.Player.Escaping += ev.OnEscaping;
-			Exiled.Events.Handlers.Player.ChangingRole += ev.OnRoleChange;
 
 			base.OnEnabled();
 		}
@@ -57,7 +56,6 @@ namespace CISpy
 			Exiled.Events.Handlers.Player.Left -= ev.OnPlayerLeave;
 			Exiled.Events.Handlers.Player.Handcuffing -= ev.OnHandcuffing;
 			Exiled.Events.Handlers.Player.Escaping -= ev.OnEscaping;
-			Exiled.Events.Handlers.Player.ChangingRole -= ev.OnRoleChange;
 
 			ev = null;
 
