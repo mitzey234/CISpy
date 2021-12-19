@@ -14,17 +14,17 @@ namespace CISpy
 
 		private Harmony hInstance;
 
+		private bool state = false;
+
 		public static List<int> FFGrants = new List<int>();
 
 		public override void OnEnabled() 
 		{
-
+			if (state) return;
 			hInstance = new Harmony("cm.cispy");
+			instance = this;
 			hInstance.PatchAll();
 
-
-			if (!Config.IsEnabled) return;
-			instance = this;
 			Check035();
 			ev = new EventHandlers();
 
@@ -38,13 +38,16 @@ namespace CISpy
 			Exiled.Events.Handlers.Player.Handcuffing += ev.OnHandcuffing;
 			Exiled.Events.Handlers.Player.Escaping += ev.OnEscaping;
 
+			FFGrants = new List<int>();
+
+			state = true;
 			base.OnEnabled();
 		}
 
 		public override void OnDisabled() 
 		{
-
-			hInstance.UnpatchAll();
+			if (!state) return;
+			hInstance.UnpatchAll(hInstance.Id);
 			hInstance = null;
 
 			Exiled.Events.Handlers.Server.RoundStarted -= ev.OnRoundStart;
@@ -60,6 +63,8 @@ namespace CISpy
 			ev = null;
 
 			FFGrants = null;
+
+			state = false;
 			base.OnDisabled();
 		}
 

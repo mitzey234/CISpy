@@ -16,6 +16,7 @@ namespace CISpy
 
 		private Random rand = new Random();
 
+
 		public void OnRoundStart()
 		{
 			spies.Clear();
@@ -83,7 +84,6 @@ namespace CISpy
 
 		public void OnPlayerDie(DiedEventArgs ev)
 		{
-
 			if (spies.ContainsKey(ev.Target))
 			{
 				spies.Remove(ev.Target);

@@ -1,5 +1,11 @@
-﻿using HarmonyLib;
+﻿using Exiled.API.Extensions;
+using Exiled.API.Features;
+using Exiled.Loader;
+using HarmonyLib;
+using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 namespace CISpy.Patches
 {
