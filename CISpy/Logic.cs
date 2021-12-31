@@ -63,26 +63,25 @@ namespace CISpy
 		{
 			foreach (KeyValuePair<Player, bool> spy in spies)
 			{
-				int health = (int)spy.Key.Health;
-				Dictionary<global::ItemType, ushort> ammo = new Dictionary<global::ItemType, ushort>();
-				foreach(global::ItemType ammoType in spy.Key.Ammo.Keys)
-				{
-					ammo.Add(ammoType, spy.Key.Ammo[ammoType]);
-				}
-				Vector3 saved = spy.Key.Position;
-				spy.Key.SetRole(RoleType.ChaosConscript, SpawnReason.ForceClass, false);
-
-				Timing.CallDelayed(0.5f, () =>
-				{
-					spy.Key.Health = health;
-					spy.Key.Position = saved;
-					foreach (global::ItemType ammoType in ammo.Keys)
+				if (spy.Key != null && spy.Key.IsAlive && spy.Key.IsConnected)
+                {
+					int health = (int)spy.Key.Health;
+					Dictionary<global::ItemType, ushort> ammo = new Dictionary<global::ItemType, ushort>();
+					foreach (global::ItemType ammoType in spy.Key.Ammo.Keys)
 					{
-						spy.Key.Ammo[ammoType] = ammo[ammoType];
+						ammo.Add(ammoType, spy.Key.Ammo[ammoType]);
 					}
-				});
+					Vector3 saved = spy.Key.Position;
+					spy.Key.Role = RoleType.ChaosConscript;
 
-				spy.Key.Broadcast(10, "<i>Your fellow <color=\"green\">Chaos Insurgency</color> have died.\nYou have been revealed!</i>");
+					Timing.CallDelayed(0.5f, () =>
+					{
+						spy.Key.Health = health;
+						spy.Key.Position = saved;
+						foreach (global::ItemType ammoType in ammo.Keys) spy.Key.Ammo[ammoType] = ammo[ammoType];
+					});
+					spy.Key.Broadcast(10, "<i>Your fellow <color=\"green\">Chaos Insurgency</color> have died.\nYou have been revealed!</i>");
+				}
 			}
 			spies.Clear();
 		}
