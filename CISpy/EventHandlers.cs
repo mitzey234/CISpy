@@ -65,7 +65,7 @@ namespace CISpy
 				{
 					Timing.CallDelayed(0.8f, () =>
 					{
-						MakeSpy(ev.Player);
+						MakeSpy(ev.Player, true);
 					});
 					RoundSummary.EscapedScientists--;
 					RoundSummary.EscapedClassD++;
