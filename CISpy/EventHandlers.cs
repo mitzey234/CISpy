@@ -88,7 +88,10 @@ namespace CISpy
 			{
 				spies.Remove(ev.Target);
 			}
-
+			if (ev.Target != null && ev.Killer != null && spies.ContainsKey(ev.Killer) && (ev.Target.Role == RoleType.Scientist || ev.Target.Role == RoleType.NtfCaptain || ev.Target.Role == RoleType.NtfPrivate || ev.Target.Role == RoleType.NtfSergeant || ev.Target.Role == RoleType.NtfSpecialist || ev.Target.Role == RoleType.FacilityGuard))
+            {
+				Respawning.RespawnTickets.Singleton._tickets[Respawning.SpawnableTeamType.ChaosInsurgency]++;
+            }
 			CheckSpies(ev.Target);
 		}
 
