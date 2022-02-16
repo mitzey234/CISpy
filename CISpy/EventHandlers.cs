@@ -139,6 +139,10 @@ namespace CISpy
 					CISpy.FFGrants.Add(ev.Handler.Base.GetHashCode());
 				}
 			}
+			else if (spies.ContainsKey(ev.Attacker) && !spies.ContainsKey(ev.Target) && (ev.Target.Team == Team.CDP || ev.Attacker.Team == Team.CHI) && !scp035.Contains(ev.Target))
+			{
+				ev.IsAllowed = false;
+			}
 		}
 
 		public void OnShoot(ShotEventArgs ev)
