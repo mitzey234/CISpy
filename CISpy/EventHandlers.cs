@@ -14,11 +14,15 @@ namespace CISpy
 		private bool isDisplayFriendly = false;
 		//private bool isDisplaySpy = false;
 
+		private bool temp = true;
+
 		private Random rand = new Random();
 
 
 		public void OnRoundStart()
 		{
+			temp = true;
+
 			spies.Clear();
 			CISpy.FFGrants.Clear();
 			if (rand.Next(1, 101) <= CISpy.instance.Config.GuardSpawnChance)
@@ -36,6 +40,14 @@ namespace CISpy
 
 		public void OnTeamRespawn(RespawningTeamEventArgs ev)
 		{
+			// Account for event firing multiple times
+			if (!temp) return;
+			else
+			{
+				temp = false;
+				Timing.CallDelayed(5f, () => temp = true);
+			}
+
 			if (ev.NextKnownTeam == Respawning.SpawnableTeamType.NineTailedFox && rand.Next(1, 101) <= CISpy.instance.Config.SpawnChance && ev.Players.Count >= CISpy.instance.Config.MinimumSquadSize)
 			{
 				List<Player> respawn = new List<Player>(ev.Players);
@@ -102,8 +114,8 @@ namespace CISpy
 
 		public void OnHandcuffing(HandcuffingEventArgs ev)
 		{
-			if ((spies.ContainsKey(ev.Target) && ev.Cuffer.Team == Team.CHI) ||
-				(spies.ContainsKey(ev.Cuffer) && ev.Target.Team == Team.CHI))
+			if ((spies.ContainsKey(ev.Target) && ev.Cuffer.Role.Team == Team.CHI) ||
+				(spies.ContainsKey(ev.Cuffer) && ev.Target.Role.Team == Team.CHI))
 			{
 				ev.IsAllowed = false;
 			}
@@ -124,7 +136,7 @@ namespace CISpy
 
 			if (ev.Attacker == null || ev.Target == null) return;
 
-			if (spies.ContainsKey(ev.Attacker) && !spies.ContainsKey(ev.Target) && (ev.Target.Team == Team.RSC || ev.Target.Team == Team.MTF) && !scp035.Contains(ev.Target))
+			if (spies.ContainsKey(ev.Attacker) && !spies.ContainsKey(ev.Target) && (ev.Target.Role.Team == Team.RSC || ev.Target.Role.Team == Team.MTF) && !scp035.Contains(ev.Target))
 			{
 				if (!spies[ev.Attacker])
 				{
@@ -132,7 +144,7 @@ namespace CISpy
 				}
 				CISpy.FFGrants.Add(ev.Handler.Base.GetHashCode());
 			}
-			else if (spies.ContainsKey(ev.Target) && !spies.ContainsKey(ev.Attacker) && (ev.Attacker.Team == Team.MTF || ev.Attacker.Team == Team.RSC))
+			else if (spies.ContainsKey(ev.Target) && !spies.ContainsKey(ev.Attacker) && (ev.Attacker.Role.Team == Team.MTF || ev.Attacker.Role.Team == Team.RSC))
 			{
 				if (spies[ev.Target])
 				{
@@ -152,7 +164,7 @@ namespace CISpy
 				scp035 = TryGet035();
 			}
 			 
-			if (spies.ContainsKey(ev.Target) && !spies.ContainsKey(ev.Shooter) && ev.Target.Id != ev.Shooter.Id && (ev.Shooter.Team == Team.CHI || ev.Shooter.Team == Team.CDP) && !scp035.Contains(ev.Shooter))
+			if (spies.ContainsKey(ev.Target) && !spies.ContainsKey(ev.Shooter) && ev.Target.Id != ev.Shooter.Id && (ev.Shooter.Role.Team == Team.CHI || ev.Shooter.Role.Team == Team.CDP) && !scp035.Contains(ev.Shooter))
 			{
 				if (!isDisplayFriendly)
 				{
@@ -164,7 +176,7 @@ namespace CISpy
 				});
 				ev.CanHurt = false;
 			}
-			else if (!spies.ContainsKey(ev.Target) && spies.ContainsKey(ev.Shooter) && (ev.Target.Team == Team.CHI || ev.Target.Team == Team.CDP) && !scp035.Contains(ev.Shooter))
+			else if (!spies.ContainsKey(ev.Target) && spies.ContainsKey(ev.Shooter) && (ev.Target.Role.Team == Team.CHI || ev.Target.Role.Team == Team.CDP) && !scp035.Contains(ev.Shooter))
 			{
 				ev.CanHurt = false;
 			}

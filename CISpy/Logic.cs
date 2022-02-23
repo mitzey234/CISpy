@@ -72,7 +72,7 @@ namespace CISpy
 						ammo.Add(ammoType, spy.Key.Ammo[ammoType]);
 					}
 					Vector3 saved = spy.Key.Position;
-					spy.Key.Role = RoleType.ChaosConscript;
+					spy.Key.Role.Type = RoleType.ChaosConscript;
 
 					Timing.CallDelayed(0.5f, () =>
 					{
@@ -89,7 +89,7 @@ namespace CISpy
 		private int CountRoles(Team team, List<Player> pList)
 		{
 			int count = 0;
-			foreach (Player pl in pList) if (pl.Team == team) count++;
+			foreach (Player pl in pList) if (pl.Role.Team == team) count++;
 			return count;
 		}
 
