@@ -19,8 +19,6 @@ namespace CISpy
 
 		public void OnRoundStart()
 		{
-			temp = true;
-
 			spies.Clear();
 			CISpy.FFGrants.Clear();
 			if (rand.Next(1, 101) <= CISpy.instance.Config.GuardSpawnChance)
