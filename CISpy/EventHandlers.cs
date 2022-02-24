@@ -14,8 +14,6 @@ namespace CISpy
 		private bool isDisplayFriendly = false;
 		//private bool isDisplaySpy = false;
 
-		private bool temp = true;
-
 		private Random rand = new Random();
 
 
@@ -40,14 +38,6 @@ namespace CISpy
 
 		public void OnTeamRespawn(RespawningTeamEventArgs ev)
 		{
-			// Account for event firing multiple times
-			if (!temp) return;
-			else
-			{
-				temp = false;
-				Timing.CallDelayed(5f, () => temp = true);
-			}
-
 			if (ev.NextKnownTeam == Respawning.SpawnableTeamType.NineTailedFox && rand.Next(1, 101) <= CISpy.instance.Config.SpawnChance && ev.Players.Count >= CISpy.instance.Config.MinimumSquadSize)
 			{
 				List<Player> respawn = new List<Player>(ev.Players);
