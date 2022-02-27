@@ -11,11 +11,10 @@ namespace CISpy
 	{
 		internal static Dictionary<Player, bool> spies = new Dictionary<Player, bool> ();
 
-		private bool isDisplayFriendly = false;
+		private static bool isDisplayFriendly = false;
 		//private bool isDisplaySpy = false;
 
 		private Random rand = new Random();
-
 
 		public void OnRoundStart()
 		{
@@ -138,21 +137,28 @@ namespace CISpy
 				{
 					CISpy.FFGrants.Add(ev.Handler.Base.GetHashCode());
 				}
+			} 
+			else if (spies.ContainsKey(ev.Target) && !spies.ContainsKey(ev.Attacker) && ev.Target.Id != ev.Attacker.Id && (ev.Attacker.Role.Team == Team.CHI || ev.Attacker.Role.Team == Team.CDP) && !scp035.Contains(ev.Attacker))
+            {
+				ev.IsAllowed = false;
+            } 
+			else if (!spies.ContainsKey(ev.Target) && spies.ContainsKey(ev.Attacker) && (ev.Target.Role.Team == Team.CHI || ev.Target.Role.Team == Team.CDP) && !scp035.Contains(ev.Attacker))
+			{
+				ev.IsAllowed = false;
 			}
 		}
 
-		public void OnShoot(ShotEventArgs ev)
+		public static bool OnShoot(Player attacker, Player target)
 		{
-			if (ev.Target == null || ev.Shooter == null) return;
-
-			List<Player> scp035 = null;
+			if (target == null || attacker == null) return true;
+			List<Player> scp035 = new List<Player>();
 
 			if (CISpy.isScp035)
 			{
 				scp035 = TryGet035();
 			}
-			 
-			if (spies.ContainsKey(ev.Target) && !spies.ContainsKey(ev.Shooter) && ev.Target.Id != ev.Shooter.Id && (ev.Shooter.Role.Team == Team.CHI || ev.Shooter.Role.Team == Team.CDP) && !scp035.Contains(ev.Shooter))
+			//If target is spy, and attacker is not spy, and its not suicide, and team is chaos, and player is not 035
+			if (spies.ContainsKey(target) && !spies.ContainsKey(attacker) && target.Id != attacker.Id && (attacker.Role.Team == Team.CHI || attacker.Role.Team == Team.CDP) && !scp035.Contains(attacker))
 			{
 				if (!isDisplayFriendly)
 				{
@@ -162,12 +168,13 @@ namespace CISpy
 				{
 					isDisplayFriendly = false;
 				});
-				ev.CanHurt = false;
+				return false;
 			}
-			else if (!spies.ContainsKey(ev.Target) && spies.ContainsKey(ev.Shooter) && (ev.Target.Role.Team == Team.CHI || ev.Target.Role.Team == Team.CDP) && !scp035.Contains(ev.Shooter))
+			else if (!spies.ContainsKey(target) && spies.ContainsKey(attacker) && (target.Role.Team == Team.CHI || target.Role.Team == Team.CDP) && !scp035.Contains(attacker))
 			{
-				ev.CanHurt = false;
+				return false;
 			}
+			return true; 
 		}
 	}
 }

@@ -37,7 +37,7 @@ namespace CISpy
 			}
 		}
 
-		private List<Player> TryGet035()
+		static private List<Player> TryGet035()
 		{
 			List<Player> scp035 = null;
 			if (CISpy.isScp035)
