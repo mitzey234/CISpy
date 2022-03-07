@@ -33,7 +33,7 @@ namespace CISpy
 			Exiled.Events.Handlers.Player.ChangingRole += ev.OnSetClass;
 			Exiled.Events.Handlers.Player.Died += ev.OnPlayerDie;
 			Exiled.Events.Handlers.Player.Hurting += ev.OnPlayerHurt;
-			Exiled.Events.Handlers.Player.Shot += ev.OnShoot;
+			//Exiled.Events.Handlers.Player.Shot += ev.OnShoot;
 			Exiled.Events.Handlers.Player.Left += ev.OnPlayerLeave;
 			Exiled.Events.Handlers.Player.Handcuffing += ev.OnHandcuffing;
 			Exiled.Events.Handlers.Player.Escaping += ev.OnEscaping;
@@ -55,7 +55,7 @@ namespace CISpy
 			Exiled.Events.Handlers.Player.ChangingRole -= ev.OnSetClass;
 			Exiled.Events.Handlers.Player.Died -= ev.OnPlayerDie;
 			Exiled.Events.Handlers.Player.Hurting -= ev.OnPlayerHurt;
-			Exiled.Events.Handlers.Player.Shot -= ev.OnShoot;
+			//Exiled.Events.Handlers.Player.Shot -= ev.OnShoot;
 			Exiled.Events.Handlers.Player.Left -= ev.OnPlayerLeave;
 			Exiled.Events.Handlers.Player.Handcuffing -= ev.OnHandcuffing;
 			Exiled.Events.Handlers.Player.Escaping -= ev.OnEscaping;

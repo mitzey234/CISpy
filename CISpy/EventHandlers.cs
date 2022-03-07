@@ -11,11 +11,10 @@ namespace CISpy
 	{
 		internal static Dictionary<Player, bool> spies = new Dictionary<Player, bool> ();
 
-		private bool isDisplayFriendly = false;
+		private static bool isDisplayFriendly = false;
 		//private bool isDisplaySpy = false;
 
 		private Random rand = new Random();
-
 
 		public void OnRoundStart()
 		{
@@ -65,7 +64,7 @@ namespace CISpy
 				{
 					Timing.CallDelayed(0.8f, () =>
 					{
-						MakeSpy(ev.Player);
+						MakeSpy(ev.Player, true);
 					});
 					RoundSummary.EscapedScientists--;
 					RoundSummary.EscapedClassD++;
@@ -102,8 +101,8 @@ namespace CISpy
 
 		public void OnHandcuffing(HandcuffingEventArgs ev)
 		{
-			if ((spies.ContainsKey(ev.Target) && ev.Cuffer.Team == Team.CHI) ||
-				(spies.ContainsKey(ev.Cuffer) && ev.Target.Team == Team.CHI))
+			if ((spies.ContainsKey(ev.Target) && ev.Cuffer.Role.Team == Team.CHI) ||
+				(spies.ContainsKey(ev.Cuffer) && ev.Target.Role.Team == Team.CHI))
 			{
 				ev.IsAllowed = false;
 			}
@@ -124,7 +123,7 @@ namespace CISpy
 
 			if (ev.Attacker == null || ev.Target == null) return;
 
-			if (spies.ContainsKey(ev.Attacker) && !spies.ContainsKey(ev.Target) && (ev.Target.Team == Team.RSC || ev.Target.Team == Team.MTF) && !scp035.Contains(ev.Target))
+			if (spies.ContainsKey(ev.Attacker) && !spies.ContainsKey(ev.Target) && (ev.Target.Role.Team == Team.RSC || ev.Target.Role.Team == Team.MTF) && !scp035.Contains(ev.Target))
 			{
 				if (!spies[ev.Attacker])
 				{
@@ -132,12 +131,20 @@ namespace CISpy
 				}
 				CISpy.FFGrants.Add(ev.Handler.Base.GetHashCode());
 			}
-			else if (spies.ContainsKey(ev.Target) && !spies.ContainsKey(ev.Attacker) && (ev.Attacker.Team == Team.MTF || ev.Attacker.Team == Team.RSC))
+			else if (spies.ContainsKey(ev.Target) && !spies.ContainsKey(ev.Attacker) && (ev.Attacker.Role.Team == Team.MTF || ev.Attacker.Role.Team == Team.RSC))
 			{
 				if (spies[ev.Target])
 				{
 					CISpy.FFGrants.Add(ev.Handler.Base.GetHashCode());
 				}
+			} 
+			else if (spies.ContainsKey(ev.Target) && !spies.ContainsKey(ev.Attacker) && ev.Target.Id != ev.Attacker.Id && (ev.Attacker.Role.Team == Team.CHI || ev.Attacker.Role.Team == Team.CDP) && !scp035.Contains(ev.Attacker))
+            {
+				ev.IsAllowed = false;
+            } 
+			else if (!spies.ContainsKey(ev.Target) && spies.ContainsKey(ev.Attacker) && (ev.Target.Role.Team == Team.CHI || ev.Target.Role.Team == Team.CDP) && !scp035.Contains(ev.Attacker))
+			{
+				ev.IsAllowed = false;
 			}
 			else if (spies.ContainsKey(ev.Attacker) && !spies.ContainsKey(ev.Target) && (ev.Target.Team == Team.CDP || ev.Attacker.Team == Team.CHI) && !scp035.Contains(ev.Target))
 			{
@@ -145,18 +152,17 @@ namespace CISpy
 			}
 		}
 
-		public void OnShoot(ShotEventArgs ev)
+		public static bool OnShoot(Player attacker, Player target)
 		{
-			if (ev.Target == null || ev.Shooter == null) return;
-
-			List<Player> scp035 = null;
+			if (target == null || attacker == null) return true;
+			List<Player> scp035 = new List<Player>();
 
 			if (CISpy.isScp035)
 			{
 				scp035 = TryGet035();
 			}
-			 
-			if (spies.ContainsKey(ev.Target) && !spies.ContainsKey(ev.Shooter) && ev.Target.Id != ev.Shooter.Id && (ev.Shooter.Team == Team.CHI || ev.Shooter.Team == Team.CDP) && !scp035.Contains(ev.Shooter))
+			//If target is spy, and attacker is not spy, and its not suicide, and team is chaos, and player is not 035
+			if (spies.ContainsKey(target) && !spies.ContainsKey(attacker) && target.Id != attacker.Id && (attacker.Role.Team == Team.CHI || attacker.Role.Team == Team.CDP) && !scp035.Contains(attacker))
 			{
 				if (!isDisplayFriendly)
 				{
@@ -166,12 +172,13 @@ namespace CISpy
 				{
 					isDisplayFriendly = false;
 				});
-				ev.CanHurt = false;
+				return false;
 			}
-			else if (!spies.ContainsKey(ev.Target) && spies.ContainsKey(ev.Shooter) && (ev.Target.Team == Team.CHI || ev.Target.Team == Team.CDP) && !scp035.Contains(ev.Shooter))
+			else if (!spies.ContainsKey(target) && spies.ContainsKey(attacker) && (target.Role.Team == Team.CHI || target.Role.Team == Team.CDP) && !scp035.Contains(attacker))
 			{
-				ev.CanHurt = false;
+				return false;
 			}
+			return true; 
 		}
 	}
 }
