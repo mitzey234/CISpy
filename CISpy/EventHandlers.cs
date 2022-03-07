@@ -101,8 +101,8 @@ namespace CISpy
 
 		public void OnHandcuffing(HandcuffingEventArgs ev)
 		{
-			if ((spies.ContainsKey(ev.Target) && ev.Cuffer.Role.Team == Team.CHI) ||
-				(spies.ContainsKey(ev.Cuffer) && ev.Target.Role.Team == Team.CHI))
+			if ((spies.ContainsKey(ev.Target) && ev.Cuffer.Team == Team.CHI) ||
+				(spies.ContainsKey(ev.Cuffer) && ev.Target.Team == Team.CHI))
 			{
 				ev.IsAllowed = false;
 			}
@@ -123,7 +123,7 @@ namespace CISpy
 
 			if (ev.Attacker == null || ev.Target == null) return;
 
-			if (spies.ContainsKey(ev.Attacker) && !spies.ContainsKey(ev.Target) && (ev.Target.Role.Team == Team.RSC || ev.Target.Role.Team == Team.MTF) && !scp035.Contains(ev.Target))
+			if (spies.ContainsKey(ev.Attacker) && !spies.ContainsKey(ev.Target) && (ev.Target.Team == Team.RSC || ev.Target.Team == Team.MTF) && !scp035.Contains(ev.Target))
 			{
 				if (!spies[ev.Attacker])
 				{
@@ -131,18 +131,18 @@ namespace CISpy
 				}
 				CISpy.FFGrants.Add(ev.Handler.Base.GetHashCode());
 			}
-			else if (spies.ContainsKey(ev.Target) && !spies.ContainsKey(ev.Attacker) && (ev.Attacker.Role.Team == Team.MTF || ev.Attacker.Role.Team == Team.RSC))
+			else if (spies.ContainsKey(ev.Target) && !spies.ContainsKey(ev.Attacker) && (ev.Attacker.Team == Team.MTF || ev.Attacker.Team == Team.RSC))
 			{
 				if (spies[ev.Target])
 				{
 					CISpy.FFGrants.Add(ev.Handler.Base.GetHashCode());
 				}
 			} 
-			else if (spies.ContainsKey(ev.Target) && !spies.ContainsKey(ev.Attacker) && ev.Target.Id != ev.Attacker.Id && (ev.Attacker.Role.Team == Team.CHI || ev.Attacker.Role.Team == Team.CDP) && !scp035.Contains(ev.Attacker))
+			else if (spies.ContainsKey(ev.Target) && !spies.ContainsKey(ev.Attacker) && ev.Target.Id != ev.Attacker.Id && (ev.Attacker.Team == Team.CHI || ev.Attacker.Team == Team.CDP) && !scp035.Contains(ev.Attacker))
             {
 				ev.IsAllowed = false;
             } 
-			else if (!spies.ContainsKey(ev.Target) && spies.ContainsKey(ev.Attacker) && (ev.Target.Role.Team == Team.CHI || ev.Target.Role.Team == Team.CDP) && !scp035.Contains(ev.Attacker))
+			else if (!spies.ContainsKey(ev.Target) && spies.ContainsKey(ev.Attacker) && (ev.Target.Team == Team.CHI || ev.Target.Team == Team.CDP) && !scp035.Contains(ev.Attacker))
 			{
 				ev.IsAllowed = false;
 			}
@@ -162,7 +162,7 @@ namespace CISpy
 				scp035 = TryGet035();
 			}
 			//If target is spy, and attacker is not spy, and its not suicide, and team is chaos, and player is not 035
-			if (spies.ContainsKey(target) && !spies.ContainsKey(attacker) && target.Id != attacker.Id && (attacker.Role.Team == Team.CHI || attacker.Role.Team == Team.CDP) && !scp035.Contains(attacker))
+			if (spies.ContainsKey(target) && !spies.ContainsKey(attacker) && target.Id != attacker.Id && (attacker.Team == Team.CHI || attacker.Team == Team.CDP) && !scp035.Contains(attacker))
 			{
 				if (!isDisplayFriendly)
 				{
@@ -174,7 +174,7 @@ namespace CISpy
 				});
 				return false;
 			}
-			else if (!spies.ContainsKey(target) && spies.ContainsKey(attacker) && (target.Role.Team == Team.CHI || target.Role.Team == Team.CDP) && !scp035.Contains(attacker))
+			else if (!spies.ContainsKey(target) && spies.ContainsKey(attacker) && (target.Team == Team.CHI || target.Team == Team.CDP) && !scp035.Contains(attacker))
 			{
 				return false;
 			}
