@@ -72,12 +72,15 @@ namespace CISpy
 						ammo.Add(ammoType, spy.Key.Ammo[ammoType]);
 					}
 					Vector3 saved = spy.Key.Position;
+					List<ItemType> savedItems = spy.Key.Items.Select(x => x.Type).ToList();
+					spy.Key.ClearInventory();
 					spy.Key.Role.Type = RoleType.ChaosConscript;
 
 					Timing.CallDelayed(0.5f, () =>
 					{
 						spy.Key.Health = health;
 						spy.Key.Position = saved;
+						spy.Key.ResetInventory(savedItems);
 						foreach (global::ItemType ammoType in ammo.Keys) spy.Key.Ammo[ammoType] = ammo[ammoType];
 					});
 					spy.Key.Broadcast(10, "<i>Your fellow <color=\"green\">Chaos Insurgency</color> have died.\nYou have been revealed!</i>");
