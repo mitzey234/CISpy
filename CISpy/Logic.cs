@@ -65,6 +65,10 @@ namespace CISpy
 			{
 				if (spy.Key != null && spy.Key.IsAlive && spy.Key.IsConnected)
                 {
+					if (spy.Key.Zone != ZoneType.Surface && ((Warhead.IsInProgress && Warhead.DetonationTimer <= 1) || Warhead.IsDetonated))
+                    {
+						spies.Remove(spy.Key);
+					}
 					int health = (int)spy.Key.Health;
 					Dictionary<global::ItemType, ushort> ammo = new Dictionary<global::ItemType, ushort>();
 					foreach (global::ItemType ammoType in spy.Key.Ammo.Keys)
