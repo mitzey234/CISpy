@@ -16,26 +16,29 @@ namespace CISpy
 		{
 			try
 			{
-				/*List<ItemType> savedItems = player.Items.Select(x => x.Type).ToList();
-				if (!CISpy.instance.Config.SpawnWithGrenade && full)
-				{
-					for (int i = player.Items.Count - 1; i >= 0; i--)
-					{
-						if (player.Items.ElementAt(i).Type == ItemType.GrenadeHE)
-						{
-							player.RemoveItem(player.Items.ElementAt(i));
-						}
-					}
-				}*/
+				Log.Warn("CREATING SPY: " + player.Nickname);
 				if (spyOriginalRole.ContainsKey(player))
 				{
 					InventorySystem.InventoryRoleInfo inventory = InventorySystem.Configs.StartingInventories.DefinedInventories[spyOriginalRole[player]];
-					player.ResetInventory(inventory.Items);
-					for (int i = inventory.Ammo.Count - 1; i >= 0; i--)
+					player.ClearInventory();
+					for (int i = 0; i < inventory.Items.Length; i++)
 					{
-						var entry = inventory.Ammo.ElementAt(i);
-						player.Ammo[entry.Key] = entry.Value;
+						ItemType type = inventory.Items[i];
+						if (type == ItemType.GrenadeHE && !CISpy.instance.Config.SpawnWithGrenade)
+						{
+							type = ItemType.GrenadeFlash;
+						}
+						player.AddItem(type);
 					}
+					Timing.CallDelayed(0.1f, () =>
+					{
+						for (int i = inventory.Ammo.Count - 1; i >= 0; i--)
+						{
+							var entry = inventory.Ammo.ElementAt(i);
+							player.Ammo[entry.Key] = entry.Value;
+						}
+						player.Inventory.SendAmmoNextFrame = true;
+					});
 				}
 				player.AddItem(ItemType.KeycardChaosInsurgency);
 				if (!spies.ContainsKey(player)) spies.Add(player, isVulnerable);

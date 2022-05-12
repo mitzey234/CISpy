@@ -81,7 +81,8 @@ namespace CISpy
 				List<RoleType> roleList = queue.ToList();
 
 				// index 0 is always commander -- skip
-				int indx = rand.Next(1, ev.Players.Count);
+				//int indx = rand.Next(1, ev.Players.Count);
+				int indx = rand.Next(0, ev.Players.Count);
 				RoleType originalRole = roleList[indx];
 				roleList[indx] = RoleType.ChaosConscript;
 
@@ -185,8 +186,13 @@ namespace CISpy
 
 		public void OnSetClass(ChangingRoleEventArgs ev)
 		{
+			if (spawnPos.ContainsKey(ev.Player))
+			{
+				ev.Ammo.Clear();
+			}
 			if (spies.ContainsKey(ev.Player))
 			{
+				spyOriginalRole.Remove(ev.Player);
 				Timing.CallDelayed(0.1f, () => spies.Remove(ev.Player));
 			}
 		}
