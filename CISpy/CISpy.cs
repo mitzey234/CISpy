@@ -2,6 +2,8 @@
 using Exiled.Loader;
 using HarmonyLib;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 
 namespace CISpy
 {
@@ -87,6 +89,11 @@ namespace CISpy
 					return;
 				}
 			}
+		}
+
+		internal static void AccessHintSystem(Player p, string hint, float time, int lineBuffer)
+		{
+			Loader.Plugins.FirstOrDefault(pl => pl.Name == "HintSystem")?.Assembly?.GetType("HintSystem.HintSystem")?.GetMethod("ShowHint", BindingFlags.Public | BindingFlags.Static)?.Invoke(null, new object[] { p, hint, time, lineBuffer });
 		}
 	}
 }

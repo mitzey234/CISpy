@@ -33,7 +33,7 @@ namespace CISpy
 				if (!spies.ContainsKey(player)) spies.Add(player, isVulnerable);
 				else spies[player] = isVulnerable;
 				player.Broadcast(10, "<i><size=60>You are a <b><color=\"green\">CISpy</color></b></size>\nCheck your console by pressing [`] or [~] for more info.</i>");
-				player.ReferenceHub.characterClassManager.TargetConsolePrint(player.ReferenceHub.scp079PlayerScript.connectionToClient, "You are a Chaos Insurgency Spy! You are immune to MTF for now, but as soon as you damage an MTF, your spy immunity will turn off.\n\nHelp Chaos win the round and kill as many MTF and Scientists as you can.", "yellow");
+				player.ReferenceHub.characterClassManager.TargetConsolePrint(player.ReferenceHub.scp079PlayerScript.connectionToClient, "You are a Chaos Insurgency Spy! You are immune to MTF for now, but as soon as you damage an MTF, your spy immunity will turn off.\n\nHelp Chaos win the round and kill as many MTF and Scientists as you can!", "yellow");
 			} catch(Exception e)
 			{
 				Log.Error(e);
@@ -68,24 +68,6 @@ namespace CISpy
 			{
 				if (spy.Key != null && spy.Key.IsAlive && spy.Key.IsConnected)
                 {
-					/*int health = (int)spy.Key.Health;
-					Dictionary<global::ItemType, ushort> ammo = new Dictionary<global::ItemType, ushort>();
-					foreach (global::ItemType ammoType in spy.Key.Ammo.Keys)
-					{
-						ammo.Add(ammoType, spy.Key.Ammo[ammoType]);
-					}
-					Vector3 saved = spy.Key.Position;
-					List<ItemType> savedItems = spy.Key.Items.Select(x => x.Type).ToList();
-					spy.Key.ClearInventory();
-					spy.Key.Role.Type = RoleType.ChaosConscript;
-
-					Timing.CallDelayed(0.5f, () =>
-					{
-						spy.Key.Health = health;
-						spy.Key.Position = saved;
-						spy.Key.ResetInventory(savedItems);
-						foreach (global::ItemType ammoType in ammo.Keys) spy.Key.Ammo[ammoType] = ammo[ammoType];
-					});*/
 					spy.Key.Broadcast(10, "<i>Your fellow <color=\"green\">Chaos Insurgency</color> have died.\nYou have been revealed!</i>");
 					spy.Key.ChangeAppearance(RoleType.ChaosConscript);
 					spiesRevealed = true;

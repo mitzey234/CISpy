@@ -17,8 +17,6 @@ namespace CISpy
 		internal static Dictionary<Player, bool> spies = new Dictionary<Player, bool> ();
 		private Dictionary<Player, Vector3> spawnPos = new Dictionary<Player, Vector3>();
 
-		//private static bool isDisplayFriendly = false;
-		//private bool isDisplaySpy = false;
 		private bool spiesRevealed = false;
 
 		private System.Random rand = new System.Random();
@@ -79,7 +77,7 @@ namespace CISpy
 				spawnableTeamHandlerBase.GenerateQueue(queue, ev.Players.Count);
 				List<RoleType> roleList = queue.ToList();
 
-				// first index is always commander
+				// index 0 is always commander -- skip
 				int indx = rand.Next(1, ev.Players.Count);
 				RoleType originalRole = roleList[indx];
 				roleList[indx] = RoleType.ChaosConscript;
@@ -129,6 +127,8 @@ namespace CISpy
 			if (player != null && spies.ContainsKey(player) && !spies[player])
 			{
 				ev.IsAllowed = false;
+				string hint = $"\n\n\n\n\n\n\n\n\n\n\n\n\nYou are shooting a <color=#03811a>CISpy!</color>";
+				CISpy.AccessHintSystem(ev.Shooter, hint, 2f, 0);
 				if (ev.Shooter.CurrentItem is Firearm firearm)
 				{
 					firearm.Ammo -= 1;
