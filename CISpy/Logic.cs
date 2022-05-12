@@ -5,21 +5,19 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Exiled.API.Extensions;
+using System.Reflection;
 
 namespace CISpy
 {
-	using Exiled.API.Enums;
-	using Exiled.API.Extensions;
-	using System.Reflection;
-
 	partial class EventHandlers
 	{
 		internal static void MakeSpy(Player player, bool isVulnerable = false, bool full = true)
 		{
 			try
 			{
-				List<ItemType> savedItems = player.Items.Select(x => x.Type).ToList();
-				/*if (!CISpy.instance.Config.SpawnWithGrenade && full)
+				/*List<ItemType> savedItems = player.Items.Select(x => x.Type).ToList();
+				if (!CISpy.instance.Config.SpawnWithGrenade && full)
 				{
 					for (int i = player.Items.Count - 1; i >= 0; i--)
 					{
@@ -29,6 +27,16 @@ namespace CISpy
 						}
 					}
 				}*/
+				if (spyOriginalRole.ContainsKey(player))
+				{
+					InventorySystem.InventoryRoleInfo inventory = InventorySystem.Configs.StartingInventories.DefinedInventories[spyOriginalRole[player]];
+					player.ResetInventory(inventory.Items);
+					for (int i = inventory.Ammo.Count - 1; i >= 0; i--)
+					{
+						var entry = inventory.Ammo.ElementAt(i);
+						player.Ammo[entry.Key] = entry.Value;
+					}
+				}
 				player.AddItem(ItemType.KeycardChaosInsurgency);
 				if (!spies.ContainsKey(player)) spies.Add(player, isVulnerable);
 				else spies[player] = isVulnerable;
@@ -64,13 +72,17 @@ namespace CISpy
 
 		private void RevealSpies()
 		{
-			foreach (KeyValuePair<Player, bool> spy in spies)
+			for (int i = spies.Count - 1; i >= 0; i--)
 			{
+				var spy = spies.ElementAt(i);
 				if (spy.Key != null && spy.Key.IsAlive && spy.Key.IsConnected)
-                {
+				{
+					spy.Key.CurrentItem = default;
 					spy.Key.Broadcast(10, "<i>Your fellow <color=\"green\">Chaos Insurgency</color> have died.\nYou have been revealed!</i>");
+					MirrorExtensions.SendFakeSyncVar(spy.Key, spy.Key.ReferenceHub.networkIdentity, typeof(CharacterClassManager), nameof(CharacterClassManager.NetworkCurClass), (sbyte)RoleType.ChaosConscript);
 					spy.Key.ChangeAppearance(RoleType.ChaosConscript);
 					spiesRevealed = true;
+					spies[spy.Key] = true;
 				}
 			}
 		}
@@ -95,43 +107,8 @@ namespace CISpy
 				Log.Debug("SCP-035 not installed, skipping method call...");
 			}
 
-			List<Player> Serpents;
-			if (Loader.Plugins.Where(pl => pl.Name == "SerpentsHand").ToList().Count > 0)
-			{
-				try
-				{
-					Serpents = (List<Player>)Loader.Plugins.First(pl => pl.Name == "SerpentsHand").Assembly.GetType("SerpentsHand.API.SerpentsHand").GetMethod("GetSHPlayers", BindingFlags.Public | BindingFlags.Static).Invoke(null, null);
-				}
-				catch (System.Exception e)
-				{
-					Serpents = new List<Player>();
-				}
-			}
-			else
-			{
-				Serpents = new List<Player>();
-			}
-
-			int playerid = -1;
-			if (exclude != null) playerid = exclude.Id;
-			List<Player> pList = Player.List.Where(x =>
-			x.Id != playerid &&
-			!scp035.Contains(x) &&
-			!spies.ContainsKey(x)).ToList();
-
-			bool CiAlive = CountRoles(Team.CHI, pList) > 0;
-			bool ScpAlive = CountRoles(Team.SCP, pList) > 0 + scp035.Count + Serpents.Count;
-			bool DClassAlive = CountRoles(Team.CDP, pList) > 0;
-			bool ScientistsAlive = CountRoles(Team.RSC, pList) > 0;
-			bool MTFAlive = CountRoles(Team.MTF, pList) > 0;
-
-			if
-			(
-				((CiAlive || (CiAlive && ScpAlive) || (CiAlive && DClassAlive)) && !ScientistsAlive && !MTFAlive) ||
-				((ScpAlive || DClassAlive) && !ScientistsAlive && !MTFAlive) ||
-				((ScientistsAlive || MTFAlive || (ScientistsAlive && MTFAlive)) && !CiAlive && !ScpAlive && !DClassAlive) ||
-				(!CiAlive && !ScpAlive && !DClassAlive && !ScientistsAlive && !MTFAlive && spies.Count > 0)
-			)
+			List<Player> pList = Player.Get(x => !scp035.Contains(x)).ToList();
+			if (pList.Where(x => x.Role.Team == Team.CHI).All(x => spies.ContainsKey(x)) && !pList.Any(x => x.Role == RoleType.ClassD))
 			{
 				RevealSpies();
 			}

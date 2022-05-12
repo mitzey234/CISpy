@@ -50,8 +50,7 @@ namespace CISpy
 			if (spies.ContainsKey(ev.Player) && spawnPos.ContainsKey(ev.Player))
 			{
 				MakeSpy(ev.Player);
-				ev.Player.SendFakeSyncVar(ev.Player.ReferenceHub.networkIdentity, typeof(CharacterClassManager), nameof(CharacterClassManager.NetworkCurClass), (sbyte)RoleType.ChaosConscript);
-				if (spyOriginalRole.ContainsKey(ev.Player)) spyOriginalRole.Remove(ev.Player);
+				//ev.Player.SendFakeSyncVar(ev.Player.ReferenceHub.networkIdentity, typeof(CharacterClassManager), nameof(CharacterClassManager.NetworkCurClass), (sbyte)RoleType.ChaosConscript);
 				spawnPos.Remove(ev.Player);
 			}
 		}
@@ -63,6 +62,10 @@ namespace CISpy
 				if (spiesRevealed)
 				{
 					MirrorExtensions.SendFakeSyncVar(ev.Player, entry.Key.ReferenceHub.networkIdentity, typeof(CharacterClassManager), nameof(CharacterClassManager.NetworkCurClass), (sbyte)RoleType.ChaosConscript);
+				}
+				else if (spyOriginalRole.ContainsKey(entry.Key))
+				{
+					MirrorExtensions.SendFakeSyncVar(ev.Player, entry.Key.ReferenceHub.networkIdentity, typeof(CharacterClassManager), nameof(CharacterClassManager.NetworkCurClass), (sbyte)spyOriginalRole[entry.Key]);
 				}
 			}
 		}
@@ -121,17 +124,44 @@ namespace CISpy
 			RespawnManager.Singleton.NextKnownTeam = SpawnableTeamType.None;
 		}
 
+		public void OnRoundEnded(RoundEndedEventArgs ev)
+		{
+			RevealSpies();
+		}
+
 		public void OnShoot(ShootingEventArgs ev)
 		{
-			Player player = Player.Get(ev.TargetNetId);
-			if (player != null && spies.ContainsKey(player) && !spies[player])
+			Player target = Player.Get(ev.TargetNetId);
+
+			List<Player> scp035 = null;
+			try
 			{
-				ev.IsAllowed = false;
-				string hint = $"\n\n\n\n\n\n\n\n\n\n\n\n\nYou are shooting a <color=#03811a>CISpy!</color>";
-				CISpy.AccessHintSystem(ev.Shooter, hint, 2f, 0);
-				if (ev.Shooter.CurrentItem is Firearm firearm)
+				scp035 = TryGet035();
+			}
+			catch (Exception x)
+			{
+				Log.Debug("SCP-035 not installed, skipping method call...");
+			}
+
+			if (scp035 != null && scp035.Contains(ev.Shooter)) return;
+
+			if (target != null && spies.ContainsKey(target))
+			{
+				if (ev.Shooter.Role.Team != Team.RSC && ev.Shooter.Role.Team != Team.MTF)
 				{
-					firearm.Ammo -= 1;
+					if (!spiesRevealed)
+					{
+						string hint = $"\n\n\n\n\n\n\n\n\n\n\n\n\nYou are shooting a <color=#03811a><b>CISpy!</b></color>";
+						CISpy.AccessHintSystem(ev.Shooter, hint, 2f, 0);
+					}
+				}
+				else if (!spies[target])
+				{
+					ev.IsAllowed = false;
+					if (ev.Shooter.CurrentItem is Firearm firearm)
+					{
+						firearm.Ammo -= 1;
+					}
 				}
 			}
 		}
@@ -165,11 +195,12 @@ namespace CISpy
 		{
 			if (spies.ContainsKey(ev.Target))
 			{
+				if (spyOriginalRole.ContainsKey(ev.Target)) spyOriginalRole.Remove(ev.Target);
 				spies.Remove(ev.Target);
 			}
 			if (ev.Target != null && ev.Killer != null && spies.ContainsKey(ev.Killer) && (ev.Target.Role == RoleType.Scientist || ev.Target.Role == RoleType.NtfCaptain || ev.Target.Role == RoleType.NtfPrivate || ev.Target.Role == RoleType.NtfSergeant || ev.Target.Role == RoleType.NtfSpecialist || ev.Target.Role == RoleType.FacilityGuard))
             {
-				Respawning.RespawnTickets.Singleton._tickets[Respawning.SpawnableTeamType.ChaosInsurgency]++;
+				RespawnTickets.Singleton._tickets[Respawning.SpawnableTeamType.ChaosInsurgency]++;
             }
 			CheckSpies(ev.Target);
 		}

@@ -32,6 +32,7 @@ namespace CISpy
 
 			Exiled.Events.Handlers.Server.RoundStarted += ev.OnRoundStart;
 			Exiled.Events.Handlers.Server.RespawningTeam += ev.OnTeamRespawn;
+			Exiled.Events.Handlers.Server.RoundEnded += ev.OnRoundEnded;
 			Exiled.Events.Handlers.Player.ChangingRole += ev.OnSetClass;
 			Exiled.Events.Handlers.Player.Died += ev.OnPlayerDie;
 			Exiled.Events.Handlers.Player.Hurting += ev.OnPlayerHurt;
@@ -57,6 +58,7 @@ namespace CISpy
 
 			Exiled.Events.Handlers.Server.RoundStarted -= ev.OnRoundStart;
 			Exiled.Events.Handlers.Server.RespawningTeam -= ev.OnTeamRespawn;
+			Exiled.Events.Handlers.Server.RoundEnded -= ev.OnRoundEnded;
 			Exiled.Events.Handlers.Player.ChangingRole -= ev.OnSetClass;
 			Exiled.Events.Handlers.Player.Died -= ev.OnPlayerDie;
 			Exiled.Events.Handlers.Player.Hurting -= ev.OnPlayerHurt;
