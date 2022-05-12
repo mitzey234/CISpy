@@ -19,28 +19,31 @@ namespace CISpy
 				Log.Warn("CREATING SPY: " + player.Nickname);
 				if (spyOriginalRole.ContainsKey(player))
 				{
-					InventorySystem.InventoryRoleInfo inventory = InventorySystem.Configs.StartingInventories.DefinedInventories[spyOriginalRole[player]];
-					player.ClearInventory();
-					for (int i = 0; i < inventory.Items.Length; i++)
+					if (full)
 					{
-						ItemType type = inventory.Items[i];
-						if (type == ItemType.GrenadeHE && !CISpy.instance.Config.SpawnWithGrenade)
+						InventorySystem.InventoryRoleInfo inventory = InventorySystem.Configs.StartingInventories.DefinedInventories[spyOriginalRole[player]];
+						player.ClearInventory();
+						for (int i = 0; i < inventory.Items.Length; i++)
 						{
-							type = ItemType.GrenadeFlash;
+							ItemType type = inventory.Items[i];
+							if (type == ItemType.GrenadeHE && !CISpy.instance.Config.SpawnWithGrenade)
+							{
+								type = ItemType.GrenadeFlash;
+							}
+							player.AddItem(type);
 						}
-						player.AddItem(type);
+						player.AddItem(ItemType.KeycardChaosInsurgency);
+						Timing.CallDelayed(0.1f, () =>
+						{
+							for (int i = inventory.Ammo.Count - 1; i >= 0; i--)
+							{
+								var entry = inventory.Ammo.ElementAt(i);
+								player.Ammo[entry.Key] = entry.Value;
+							}
+							player.Inventory.SendAmmoNextFrame = true;
+						});
 					}
-					Timing.CallDelayed(0.1f, () =>
-					{
-						for (int i = inventory.Ammo.Count - 1; i >= 0; i--)
-						{
-							var entry = inventory.Ammo.ElementAt(i);
-							player.Ammo[entry.Key] = entry.Value;
-						}
-						player.Inventory.SendAmmoNextFrame = true;
-					});
 				}
-				player.AddItem(ItemType.KeycardChaosInsurgency);
 				if (!spies.ContainsKey(player)) spies.Add(player, isVulnerable);
 				else spies[player] = isVulnerable;
 				player.Broadcast(10, "<i><size=60>You are a <b><color=\"green\">CISpy</color></b></size>\nCheck your console by pressing [`] or [~] for more info.</i>");
