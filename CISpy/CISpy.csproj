@@ -104,7 +104,7 @@
     <Compile Include="EventHandlers.cs" />
     <Compile Include="Logic.cs" />
     <Compile Include="CISpy.cs" />
-    <Compile Include="Patches\FriendlyFirePatch.cs" />
+    <Compile Include="Patches\SyncVarPatch.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

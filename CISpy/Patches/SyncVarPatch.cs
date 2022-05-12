@@ -17,7 +17,7 @@ using System.Collections.Generic;
 namespace CISpy.Patches
 {
 	[HarmonyPatch(typeof(CharacterClassManager), nameof(CharacterClassManager.SerializeSyncVars))]
-	class FriendlyFirePatch
+	class SyncVarPatch
 	{
 		private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
 		{
