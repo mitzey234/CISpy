@@ -81,8 +81,7 @@ namespace CISpy
 				List<RoleType> roleList = queue.ToList();
 
 				// index 0 is always commander -- skip
-				//int indx = rand.Next(1, ev.Players.Count);
-				int indx = rand.Next(0, ev.Players.Count);
+				int indx = rand.Next(1, ev.Players.Count);
 				RoleType originalRole = roleList[indx];
 				roleList[indx] = RoleType.ChaosConscript;
 
@@ -247,7 +246,7 @@ namespace CISpy
 				!spies[ev.Attacker])
 			{
 				spies[ev.Attacker] = true;
-				ev.Attacker.Broadcast(8, "You have damaged an <color=#058df1>MTF</color> or <color=#ffff7c>Scientist</color>\n<i>You can now be damaged!</i>");
+				ev.Attacker.Broadcast(8, "<i>You have damaged an <color=#058df1>MTF</color> or <color=#ffff7c>Scientist</color></i>\nYou can now be damaged!");
 			}
 			else if (spies.ContainsKey(ev.Target) && !spies.ContainsKey(ev.Attacker) && (ev.Attacker.Role.Team == Team.MTF || ev.Attacker.Role.Team == Team.RSC) && !spies[ev.Target])
 			{
