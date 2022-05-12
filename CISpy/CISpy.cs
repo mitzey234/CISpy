@@ -39,6 +39,7 @@ namespace CISpy
 			Exiled.Events.Handlers.Player.Spawning += ev.OnSpawning;
 			Exiled.Events.Handlers.Player.Spawned += ev.OnSpawned;
 			Exiled.Events.Handlers.Player.Shooting += ev.OnShoot;
+			Exiled.Events.Handlers.Player.Verified += ev.OnPlayerJoin;
 
 			FFGrants = new List<int>();
 
@@ -63,6 +64,7 @@ namespace CISpy
 			Exiled.Events.Handlers.Player.Spawning -= ev.OnSpawning;
 			Exiled.Events.Handlers.Player.Spawned -= ev.OnSpawned;
 			Exiled.Events.Handlers.Player.Shooting -= ev.OnShoot;
+			Exiled.Events.Handlers.Player.Verified -= ev.OnPlayerJoin;
 
 			ev = null;
 

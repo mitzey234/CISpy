@@ -17,14 +17,16 @@ namespace CISpy
 		internal static Dictionary<Player, bool> spies = new Dictionary<Player, bool> ();
 		private Dictionary<Player, Vector3> spawnPos = new Dictionary<Player, Vector3>();
 
-		private static bool isDisplayFriendly = false;
+		//private static bool isDisplayFriendly = false;
 		//private bool isDisplaySpy = false;
+		private bool spiesRevealed = false;
 
 		private System.Random rand = new System.Random();
 
 		public void OnRoundStart()
 		{
 			spies.Clear();
+			spiesRevealed = false;
 			CISpy.FFGrants.Clear();
 			if (rand.Next(1, 100) < CISpy.instance.Config.GuardSpawnChance)
 			{
@@ -60,24 +62,26 @@ namespace CISpy
 		{
 			foreach (var entry in spies)
 			{
-				MirrorExtensions.SendFakeSyncVar(ev.Player, entry.Key.ReferenceHub.networkIdentity, typeof(CharacterClassManager), nameof(CharacterClassManager.NetworkCurClass), (sbyte)spyo);
+				if (spiesRevealed)
+				{
+					MirrorExtensions.SendFakeSyncVar(ev.Player, entry.Key.ReferenceHub.networkIdentity, typeof(CharacterClassManager), nameof(CharacterClassManager.NetworkCurClass), (sbyte)RoleType.ChaosConscript);
+				}
 			}
 		}
 
 		public void OnTeamRespawn(RespawningTeamEventArgs ev)
 		{
-			if (ev.NextKnownTeam == SpawnableTeamType.NineTailedFox && rand.Next(1, 101) <= CISpy.instance.Config.SpawnChance && ev.Players.Count >= CISpy.instance.Config.MinimumSquadSize)
+			if (ev.NextKnownTeam == SpawnableTeamType.NineTailedFox && rand.Next(1, 100) < CISpy.instance.Config.SpawnChance && ev.Players.Count >= CISpy.instance.Config.MinimumSquadSize)
 			{
 				ev.IsAllowed = false;
 				Queue<RoleType> queue = new Queue<RoleType>();
 				RespawnWaveGenerator.SpawnableTeams.TryGetValue(ev.NextKnownTeam, out var spawnableTeamHandlerBase);
 				spawnableTeamHandlerBase.GenerateQueue(queue, ev.Players.Count);
 				List<RoleType> roleList = queue.ToList();
-				ev.Players.ShuffleList();
 
-				List<RoleType> tempList = roleList.Where(x => CISpy.instance.Config.SpyRoles.Contains(x)).ToList();
-				int indx = rand.Next(tempList.Count);
-				RoleType originalRole = tempList[indx];
+				// first index is always commander
+				int indx = rand.Next(1, ev.Players.Count);
+				RoleType originalRole = roleList[indx];
 				roleList[indx] = RoleType.ChaosConscript;
 
 				for (int i = 0; i < ev.Players.Count; i++)
@@ -206,6 +210,7 @@ namespace CISpy
 				!spies[ev.Attacker])
 			{
 				spies[ev.Attacker] = true;
+				ev.Attacker.Broadcast(8, "You have damaged an <color=#058df1>MTF</color> or <color=#ffff7c>Scientist</color>\n<i>You can now be damaged!</i>");
 			}
 			else if (spies.ContainsKey(ev.Target) && !spies.ContainsKey(ev.Attacker) && (ev.Attacker.Role.Team == Team.MTF || ev.Attacker.Role.Team == Team.RSC) && !spies[ev.Target])
 			{

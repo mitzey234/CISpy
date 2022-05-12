@@ -88,9 +88,9 @@ namespace CISpy
 					});*/
 					spy.Key.Broadcast(10, "<i>Your fellow <color=\"green\">Chaos Insurgency</color> have died.\nYou have been revealed!</i>");
 					spy.Key.ChangeAppearance(RoleType.ChaosConscript);
+					spiesRevealed = true;
 				}
 			}
-			spies.Clear();
 		}
 
 		private int CountRoles(Team team, List<Player> pList)
