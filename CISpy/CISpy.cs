@@ -33,10 +33,12 @@ namespace CISpy
 			Exiled.Events.Handlers.Player.ChangingRole += ev.OnSetClass;
 			Exiled.Events.Handlers.Player.Died += ev.OnPlayerDie;
 			Exiled.Events.Handlers.Player.Hurting += ev.OnPlayerHurt;
-			//Exiled.Events.Handlers.Player.Shot += ev.OnShoot;
 			Exiled.Events.Handlers.Player.Left += ev.OnPlayerLeave;
 			Exiled.Events.Handlers.Player.Handcuffing += ev.OnHandcuffing;
 			Exiled.Events.Handlers.Player.Escaping += ev.OnEscaping;
+			Exiled.Events.Handlers.Player.Spawning += ev.OnSpawning;
+			Exiled.Events.Handlers.Player.Spawned += ev.OnSpawned;
+			Exiled.Events.Handlers.Player.Shooting += ev.OnShoot;
 
 			FFGrants = new List<int>();
 
@@ -55,10 +57,12 @@ namespace CISpy
 			Exiled.Events.Handlers.Player.ChangingRole -= ev.OnSetClass;
 			Exiled.Events.Handlers.Player.Died -= ev.OnPlayerDie;
 			Exiled.Events.Handlers.Player.Hurting -= ev.OnPlayerHurt;
-			//Exiled.Events.Handlers.Player.Shot -= ev.OnShoot;
 			Exiled.Events.Handlers.Player.Left -= ev.OnPlayerLeave;
 			Exiled.Events.Handlers.Player.Handcuffing -= ev.OnHandcuffing;
 			Exiled.Events.Handlers.Player.Escaping -= ev.OnEscaping;
+			Exiled.Events.Handlers.Player.Spawning -= ev.OnSpawning;
+			Exiled.Events.Handlers.Player.Spawned -= ev.OnSpawned;
+			Exiled.Events.Handlers.Player.Shooting -= ev.OnShoot;
 
 			ev = null;
 

@@ -9,6 +9,7 @@ using UnityEngine;
 namespace CISpy
 {
 	using Exiled.API.Enums;
+	using Exiled.API.Extensions;
 	using System.Reflection;
 
 	partial class EventHandlers
@@ -17,7 +18,8 @@ namespace CISpy
 		{
 			try
 			{
-				if (!CISpy.instance.Config.SpawnWithGrenade && full)
+				List<ItemType> savedItems = player.Items.Select(x => x.Type).ToList();
+				/*if (!CISpy.instance.Config.SpawnWithGrenade && full)
 				{
 					for (int i = player.Items.Count - 1; i >= 0; i--)
 					{
@@ -26,9 +28,10 @@ namespace CISpy
 							player.RemoveItem(player.Items.ElementAt(i));
 						}
 					}
-				}
+				}*/
 				player.AddItem(ItemType.KeycardChaosInsurgency);
-				spies.Add(player, isVulnerable);
+				if (!spies.ContainsKey(player)) spies.Add(player, isVulnerable);
+				else spies[player] = isVulnerable;
 				player.Broadcast(10, "<i><size=60>You are a <b><color=\"green\">CISpy</color></b></size>\nCheck your console by pressing [`] or [~] for more info.</i>");
 				player.ReferenceHub.characterClassManager.TargetConsolePrint(player.ReferenceHub.scp079PlayerScript.connectionToClient, "You are a Chaos Insurgency Spy! You are immune to MTF for now, but as soon as you damage an MTF, your spy immunity will turn off.\n\nHelp Chaos win the round and kill as many MTF and Scientists as you can.", "yellow");
 			} catch(Exception e)
@@ -65,7 +68,7 @@ namespace CISpy
 			{
 				if (spy.Key != null && spy.Key.IsAlive && spy.Key.IsConnected)
                 {
-					int health = (int)spy.Key.Health;
+					/*int health = (int)spy.Key.Health;
 					Dictionary<global::ItemType, ushort> ammo = new Dictionary<global::ItemType, ushort>();
 					foreach (global::ItemType ammoType in spy.Key.Ammo.Keys)
 					{
@@ -82,8 +85,9 @@ namespace CISpy
 						spy.Key.Position = saved;
 						spy.Key.ResetInventory(savedItems);
 						foreach (global::ItemType ammoType in ammo.Keys) spy.Key.Ammo[ammoType] = ammo[ammoType];
-					});
+					});*/
 					spy.Key.Broadcast(10, "<i>Your fellow <color=\"green\">Chaos Insurgency</color> have died.\nYou have been revealed!</i>");
+					spy.Key.ChangeAppearance(RoleType.ChaosConscript);
 				}
 			}
 			spies.Clear();
@@ -109,21 +113,21 @@ namespace CISpy
 				Log.Debug("SCP-035 not installed, skipping method call...");
 			}
 
-			List<Player> Serpants;
+			List<Player> Serpents;
 			if (Loader.Plugins.Where(pl => pl.Name == "SerpentsHand").ToList().Count > 0)
 			{
 				try
 				{
-					Serpants = (List<Player>)Loader.Plugins.First(pl => pl.Name == "SerpentsHand").Assembly.GetType("SerpentsHand.API.SerpentsHand").GetMethod("GetSHPlayers", BindingFlags.Public | BindingFlags.Static).Invoke(null, null);
+					Serpents = (List<Player>)Loader.Plugins.First(pl => pl.Name == "SerpentsHand").Assembly.GetType("SerpentsHand.API.SerpentsHand").GetMethod("GetSHPlayers", BindingFlags.Public | BindingFlags.Static).Invoke(null, null);
 				}
 				catch (System.Exception e)
 				{
-					Serpants = new List<Player>();
+					Serpents = new List<Player>();
 				}
 			}
 			else
 			{
-				Serpants = new List<Player>();
+				Serpents = new List<Player>();
 			}
 
 			int playerid = -1;
@@ -134,7 +138,7 @@ namespace CISpy
 			!spies.ContainsKey(x)).ToList();
 
 			bool CiAlive = CountRoles(Team.CHI, pList) > 0;
-			bool ScpAlive = CountRoles(Team.SCP, pList) > 0 + scp035.Count + Serpants.Count;
+			bool ScpAlive = CountRoles(Team.SCP, pList) > 0 + scp035.Count + Serpents.Count;
 			bool DClassAlive = CountRoles(Team.CDP, pList) > 0;
 			bool ScientistsAlive = CountRoles(Team.RSC, pList) > 0;
 			bool MTFAlive = CountRoles(Team.MTF, pList) > 0;
@@ -149,6 +153,12 @@ namespace CISpy
 			{
 				RevealSpies();
 			}
+		}
+
+		internal static RoleType GetSpyRoleType(ReferenceHub hub, RoleType role)
+		{
+			Player player = Player.Get(hub);
+			return player != null && spyOriginalRole.ContainsKey(player) ? spyOriginalRole[player] : role;
 		}
 	}
 }

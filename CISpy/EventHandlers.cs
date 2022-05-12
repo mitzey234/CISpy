@@ -4,55 +4,131 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Exiled.Events.EventArgs;
+using UnityEngine;
+using Respawning;
+using Exiled.API.Extensions;
+using Exiled.API.Features.Items;
 
 namespace CISpy
 {
 	partial class EventHandlers
 	{
+		internal static Dictionary<Player, RoleType> spyOriginalRole = new Dictionary<Player, RoleType>();
 		internal static Dictionary<Player, bool> spies = new Dictionary<Player, bool> ();
+		private Dictionary<Player, Vector3> spawnPos = new Dictionary<Player, Vector3>();
 
 		private static bool isDisplayFriendly = false;
 		//private bool isDisplaySpy = false;
 
-		private Random rand = new Random();
+		private System.Random rand = new System.Random();
 
 		public void OnRoundStart()
 		{
 			spies.Clear();
 			CISpy.FFGrants.Clear();
-			if (rand.Next(1, 101) <= CISpy.instance.Config.GuardSpawnChance)
+			if (rand.Next(1, 100) < CISpy.instance.Config.GuardSpawnChance)
 			{
 				Player player = Player.List.FirstOrDefault(x => x.Role == RoleType.FacilityGuard);
 				if (player != null)
 				{
-					Timing.CallDelayed(0.8f, () =>
-					{
-						MakeSpy(player);
-					});
+					MakeSpy(player);
 				}
+			}
+		}
+
+		public void OnSpawning(SpawningEventArgs ev)
+		{
+			if (spawnPos.ContainsKey(ev.Player))
+			{
+				ev.Position = spawnPos[ev.Player];
+				spies.Add(ev.Player, false);
+			}
+		}
+
+		public void OnSpawned(SpawnedEventArgs ev)
+		{
+			if (spies.ContainsKey(ev.Player) && spawnPos.ContainsKey(ev.Player))
+			{
+				MakeSpy(ev.Player);
+				ev.Player.SendFakeSyncVar(ev.Player.ReferenceHub.networkIdentity, typeof(CharacterClassManager), nameof(CharacterClassManager.NetworkCurClass), (sbyte)RoleType.ChaosConscript);
+				if (spyOriginalRole.ContainsKey(ev.Player)) spyOriginalRole.Remove(ev.Player);
+				spawnPos.Remove(ev.Player);
+			}
+		}
+
+		public void OnPlayerJoin(VerifiedEventArgs ev)
+		{
+			foreach (var entry in spies)
+			{
+				MirrorExtensions.SendFakeSyncVar(ev.Player, entry.Key.ReferenceHub.networkIdentity, typeof(CharacterClassManager), nameof(CharacterClassManager.NetworkCurClass), (sbyte)spyo);
 			}
 		}
 
 		public void OnTeamRespawn(RespawningTeamEventArgs ev)
 		{
-			if (ev.NextKnownTeam == Respawning.SpawnableTeamType.NineTailedFox && rand.Next(1, 101) <= CISpy.instance.Config.SpawnChance && ev.Players.Count >= CISpy.instance.Config.MinimumSquadSize)
+			if (ev.NextKnownTeam == SpawnableTeamType.NineTailedFox && rand.Next(1, 101) <= CISpy.instance.Config.SpawnChance && ev.Players.Count >= CISpy.instance.Config.MinimumSquadSize)
 			{
-				List<Player> respawn = new List<Player>(ev.Players);
-				Timing.CallDelayed(0.1f, () =>
+				ev.IsAllowed = false;
+				Queue<RoleType> queue = new Queue<RoleType>();
+				RespawnWaveGenerator.SpawnableTeams.TryGetValue(ev.NextKnownTeam, out var spawnableTeamHandlerBase);
+				spawnableTeamHandlerBase.GenerateQueue(queue, ev.Players.Count);
+				List<RoleType> roleList = queue.ToList();
+				ev.Players.ShuffleList();
+
+				List<RoleType> tempList = roleList.Where(x => CISpy.instance.Config.SpyRoles.Contains(x)).ToList();
+				int indx = rand.Next(tempList.Count);
+				RoleType originalRole = tempList[indx];
+				roleList[indx] = RoleType.ChaosConscript;
+
+				for (int i = 0; i < ev.Players.Count; i++)
 				{
-					List<Player> roleList = respawn.Where(x => CISpy.instance.Config.SpyRoles.Contains(x.Role)).ToList();
-					if (roleList.Count > 0)
+					RoleType role = roleList[i];
+					Player player = ev.Players[i];
+					if (role == RoleType.ChaosConscript)
 					{
-						Player player = roleList[rand.Next(roleList.Count)];
-						if (player != null)
-						{
-							Timing.CallDelayed(0.8f, () =>
-							{
-								MakeSpy(player);
-							});
-						}
+						spawnPos.Add(player, SpawnpointManager.GetRandomPosition(RoleType.NtfPrivate).transform.position);
+						spyOriginalRole.Add(player, originalRole);
+						ev.Players[i].SetRole(role);
 					}
-				});
+					else ev.Players[i].SetRole(role);
+				}
+
+				ServerLogs.AddLog(ServerLogs.Modules.ClassChange, string.Concat(new object[]
+				  {
+					"RespawnManager has successfully spawned ",
+					ev.Players.Count,
+					" players as ",
+					ev.NextKnownTeam.ToString(),
+					"!"
+				  }), ServerLogs.ServerLogType.GameEvent, false);
+				RespawnTickets.Singleton.GrantTickets(SpawnableTeamType.NineTailedFox, -roleList.Count * spawnableTeamHandlerBase.TicketRespawnCost, false);
+				Respawning.NamingRules.UnitNamingRule unitNamingRule;
+				if (Respawning.NamingRules.UnitNamingRules.TryGetNamingRule(SpawnableTeamType.NineTailedFox, out unitNamingRule))
+				{
+					string text;
+					unitNamingRule.GenerateNew(ev.NextKnownTeam, out text);
+					foreach (ReferenceHub referenceHub2 in ev.Players.Select(x => x.ReferenceHub))
+					{
+						referenceHub2.characterClassManager.NetworkCurSpawnableTeamType = (byte)ev.NextKnownTeam;
+						referenceHub2.characterClassManager.NetworkCurUnitName = text;
+					}
+					unitNamingRule.PlayEntranceAnnouncement(text);
+				}
+				RespawnEffectsController.ExecuteAllEffects(RespawnEffectsController.EffectType.UponRespawn, ev.NextKnownTeam);
+			}
+			RespawnManager.Singleton.NextKnownTeam = SpawnableTeamType.None;
+		}
+
+		public void OnShoot(ShootingEventArgs ev)
+		{
+			Player player = Player.Get(ev.TargetNetId);
+			if (player != null && spies.ContainsKey(player) && !spies[player])
+			{
+				ev.IsAllowed = false;
+				if (ev.Shooter.CurrentItem is Firearm firearm)
+				{
+					firearm.Ammo -= 1;
+				}
 			}
 		}
 
@@ -123,58 +199,18 @@ namespace CISpy
 
 			if (ev.Attacker == null || ev.Target == null) return;
 
-			if (spies.ContainsKey(ev.Attacker) && !spies.ContainsKey(ev.Target) && (ev.Target.Role.Team == Team.RSC || ev.Target.Role.Team == Team.MTF) && !scp035.Contains(ev.Target))
+			if (spies.ContainsKey(ev.Attacker) &&
+				!spies.ContainsKey(ev.Target) &&
+				(ev.Target.Role.Team == Team.RSC || ev.Target.Role.Team == Team.MTF) &&
+				!scp035.Contains(ev.Target) &&
+				!spies[ev.Attacker])
 			{
-				if (!spies[ev.Attacker])
-				{
-					spies[ev.Attacker] = true;
-				}
-				CISpy.FFGrants.Add(ev.Handler.Base.GetHashCode());
+				spies[ev.Attacker] = true;
 			}
-			else if (spies.ContainsKey(ev.Target) && !spies.ContainsKey(ev.Attacker) && (ev.Attacker.Role.Team == Team.MTF || ev.Attacker.Role.Team == Team.RSC))
+			else if (spies.ContainsKey(ev.Target) && !spies.ContainsKey(ev.Attacker) && (ev.Attacker.Role.Team == Team.MTF || ev.Attacker.Role.Team == Team.RSC) && !spies[ev.Target])
 			{
-				if (spies[ev.Target])
-				{
-					CISpy.FFGrants.Add(ev.Handler.Base.GetHashCode());
-				}
+				ev.IsAllowed = false;
 			} 
-			else if (spies.ContainsKey(ev.Target) && !spies.ContainsKey(ev.Attacker) && ev.Target.Id != ev.Attacker.Id && (ev.Attacker.Role.Team == Team.CHI || ev.Attacker.Role.Team == Team.CDP) && !scp035.Contains(ev.Attacker))
-            {
-				ev.IsAllowed = false;
-            } 
-			else if (!spies.ContainsKey(ev.Target) && spies.ContainsKey(ev.Attacker) && (ev.Target.Role.Team == Team.CHI || ev.Target.Role.Team == Team.CDP) && !scp035.Contains(ev.Attacker))
-			{
-				ev.IsAllowed = false;
-			}
-		}
-
-		public static bool OnShoot(Player attacker, Player target)
-		{
-			if (target == null || attacker == null) return true;
-			List<Player> scp035 = new List<Player>();
-
-			if (CISpy.isScp035)
-			{
-				scp035 = TryGet035();
-			}
-			//If target is spy, and attacker is not spy, and its not suicide, and team is chaos, and player is not 035
-			if (spies.ContainsKey(target) && !spies.ContainsKey(attacker) && target.Id != attacker.Id && (attacker.Role.Team == Team.CHI || attacker.Role.Team == Team.CDP) && !scp035.Contains(attacker))
-			{
-				if (!isDisplayFriendly)
-				{
-					isDisplayFriendly = true;
-				}
-				Timing.CallDelayed(3f, () =>
-				{
-					isDisplayFriendly = false;
-				});
-				return false;
-			}
-			else if (!spies.ContainsKey(target) && spies.ContainsKey(attacker) && (target.Role.Team == Team.CHI || target.Role.Team == Team.CDP) && !scp035.Contains(attacker))
-			{
-				return false;
-			}
-			return true; 
 		}
 	}
 }
