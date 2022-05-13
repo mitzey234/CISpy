@@ -10,9 +10,9 @@ namespace CISpy.API
 			return EventHandlers.spies;
 		}
 
-		public static void MakeSpy(Player player, bool isVulenrable = false, bool full = true)
+		public static void MakeSpy(Player player, RoleType spyRole, RoleType originalRole, bool full = false, bool isVulenrable  = true)
 		{
-			EventHandlers.MakeSpy(player, isVulenrable, full);
+			EventHandlers.MakeSpy(player, spyRole, originalRole, full, isVulenrable);
 		}
 	}
 }

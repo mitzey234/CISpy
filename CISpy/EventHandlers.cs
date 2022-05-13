@@ -14,8 +14,9 @@ namespace CISpy
 	partial class EventHandlers
 	{
 		internal static Dictionary<Player, RoleType> spyOriginalRole = new Dictionary<Player, RoleType>();
+		internal static Queue<Player> spyLoadoutQueue = new Queue<Player>();
 		internal static Dictionary<Player, bool> spies = new Dictionary<Player, bool> ();
-		private Dictionary<Player, Vector3> spawnPos = new Dictionary<Player, Vector3>();
+		internal static Dictionary<Player, Vector3> spawnPos = new Dictionary<Player, Vector3>();
 
 		private bool spiesRevealed = false;
 
@@ -24,16 +25,19 @@ namespace CISpy
 		public void OnRoundStart()
 		{
 			spies.Clear();
+			spyOriginalRole.Clear();
+			spyLoadoutQueue.Clear();
+			spawnPos.Clear();
 			spiesRevealed = false;
 			CISpy.FFGrants.Clear();
-			if (rand.Next(1, 100) < CISpy.instance.Config.GuardSpawnChance)
+			/*if (rand.Next(1, 100) < CISpy.instance.Config.GuardSpawnChance)
 			{
 				Player player = Player.List.FirstOrDefault(x => x.Role == RoleType.FacilityGuard);
 				if (player != null)
 				{
-					MakeSpy(player);
+					MakeSpy(player, RoleType.FacilityGuard);
 				}
-			}
+			}*/
 		}
 
 		public void OnSpawning(SpawningEventArgs ev)
@@ -41,17 +45,15 @@ namespace CISpy
 			if (spawnPos.ContainsKey(ev.Player))
 			{
 				ev.Position = spawnPos[ev.Player];
-				spies.Add(ev.Player, false);
+				spawnPos.Remove(ev.Player);
 			}
 		}
 
 		public void OnSpawned(SpawnedEventArgs ev)
 		{
-			if (spies.ContainsKey(ev.Player) && spawnPos.ContainsKey(ev.Player))
+			if (spyLoadoutQueue.Contains(ev.Player))
 			{
-				MakeSpy(ev.Player);
-				//ev.Player.SendFakeSyncVar(ev.Player.ReferenceHub.networkIdentity, typeof(CharacterClassManager), nameof(CharacterClassManager.NetworkCurClass), (sbyte)RoleType.ChaosConscript);
-				spawnPos.Remove(ev.Player);
+				GrantSpyLoadout(spyLoadoutQueue.Dequeue());
 			}
 		}
 
@@ -81,7 +83,8 @@ namespace CISpy
 				List<RoleType> roleList = queue.ToList();
 
 				// index 0 is always commander -- skip
-				int indx = rand.Next(1, ev.Players.Count);
+				//int indx = rand.Next(1, ev.Players.Count);
+				int indx = rand.Next(0, ev.Players.Count);
 				RoleType originalRole = roleList[indx];
 				roleList[indx] = RoleType.ChaosConscript;
 
@@ -91,9 +94,7 @@ namespace CISpy
 					Player player = ev.Players[i];
 					if (role == RoleType.ChaosConscript)
 					{
-						spawnPos.Add(player, SpawnpointManager.GetRandomPosition(RoleType.NtfPrivate).transform.position);
-						spyOriginalRole.Add(player, originalRole);
-						ev.Players[i].SetRole(role);
+						MakeSpy(player, role, originalRole, true, false);
 					}
 					else ev.Players[i].SetRole(role);
 				}
@@ -170,16 +171,9 @@ namespace CISpy
 		{
 			if (ev.Player.Role == RoleType.ClassD && ev.Player.IsCuffed && spies.ContainsKey(ev.Player.Cuffer))
 			{
-				Timing.CallDelayed(0.1f, () =>
-				{
-					Timing.CallDelayed(0.8f, () =>
-					{
-						MakeSpy(ev.Player, true);
-					});
-					RoundSummary.EscapedScientists--;
-					RoundSummary.EscapedClassD++;
-
-				});
+				MakeSpy(ev.Player, RoleType.ChaosConscript, ev.NewRole);
+				RoundSummary.EscapedScientists--;
+				RoundSummary.EscapedClassD++;
 			}
 		}
 
@@ -189,12 +183,14 @@ namespace CISpy
 			{
 				ev.Ammo.Clear();
 			}
-			if (spies.ContainsKey(ev.Player))
+			if (ev.Reason == Exiled.API.Enums.SpawnReason.ForceClass && spies.ContainsKey(ev.Player))
 			{
 				spyOriginalRole.Remove(ev.Player);
 				Timing.CallDelayed(0.1f, () => spies.Remove(ev.Player));
 			}
 		}
+
+		// todo: refine reveal conditions
 
 		public void OnPlayerDie(DiedEventArgs ev)
 		{
@@ -246,7 +242,7 @@ namespace CISpy
 				!spies[ev.Attacker])
 			{
 				spies[ev.Attacker] = true;
-				ev.Attacker.Broadcast(8, "<i>You have damaged an <color=#058df1>MTF</color> or <color=#ffff7c>Scientist</color></i>\nYou can now be damaged!");
+				ev.Attacker.Broadcast(8, "<size=60><b>You are now <color=red>vulnerable</color></b>\n<i>You have damaged an <color=#058df1>MTF</color> or <color=#ffff7c>Scientist</color></i>");
 			}
 			else if (spies.ContainsKey(ev.Target) && !spies.ContainsKey(ev.Attacker) && (ev.Attacker.Role.Team == Team.MTF || ev.Attacker.Role.Team == Team.RSC) && !spies[ev.Target])
 			{

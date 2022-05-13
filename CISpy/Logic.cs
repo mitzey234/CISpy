@@ -12,45 +12,57 @@ namespace CISpy
 {
 	partial class EventHandlers
 	{
-		internal static void MakeSpy(Player player, bool isVulnerable = false, bool full = true)
+		internal static void MakeSpy(Player player, RoleType spyRole, RoleType originalRole, bool full = true, bool isVulnerable = false)
 		{
 			try
 			{
-				Log.Warn("CREATING SPY: " + player.Nickname);
-				if (spyOriginalRole.ContainsKey(player))
+				if (!spies.ContainsKey(player))
 				{
-					if (full)
-					{
-						InventorySystem.InventoryRoleInfo inventory = InventorySystem.Configs.StartingInventories.DefinedInventories[spyOriginalRole[player]];
-						player.ClearInventory();
-						for (int i = 0; i < inventory.Items.Length; i++)
-						{
-							ItemType type = inventory.Items[i];
-							if (type == ItemType.GrenadeHE && !CISpy.instance.Config.SpawnWithGrenade)
-							{
-								type = ItemType.GrenadeFlash;
-							}
-							player.AddItem(type);
-						}
-						player.AddItem(ItemType.KeycardChaosInsurgency);
-						Timing.CallDelayed(0.1f, () =>
-						{
-							for (int i = inventory.Ammo.Count - 1; i >= 0; i--)
-							{
-								var entry = inventory.Ammo.ElementAt(i);
-								player.Ammo[entry.Key] = entry.Value;
-							}
-							player.Inventory.SendAmmoNextFrame = true;
-						});
-					}
+					Log.Warn("CREATING SPY: " + player.Nickname);
+
+					spawnPos.Add(player, SpawnpointManager.GetRandomPosition(RoleType.NtfPrivate).transform.position);
+					spyOriginalRole.Add(player, originalRole);
+
+					spies.Add(player, isVulnerable);
+
+					player.SetRole(spyRole, Exiled.API.Enums.SpawnReason.Respawn);
+					player.Broadcast(10, "<i><size=60>You are a <b><color=\"green\">CISpy</color></b></size>\nCheck your console by pressing [`] or [~] for more info.</i>");
+					player.ReferenceHub.characterClassManager.TargetConsolePrint(player.ReferenceHub.scp079PlayerScript.connectionToClient, "You are a Chaos Insurgency Spy! You are immune to MTF for now, but as soon as you damage an MTF, your spy immunity will turn off.\n\nHelp Chaos win the round and kill as many MTF and Scientists as you can!", "yellow");
+
+					if (full) spyLoadoutQueue.Enqueue(player);
 				}
-				if (!spies.ContainsKey(player)) spies.Add(player, isVulnerable);
-				else spies[player] = isVulnerable;
-				player.Broadcast(10, "<i><size=60>You are a <b><color=\"green\">CISpy</color></b></size>\nCheck your console by pressing [`] or [~] for more info.</i>");
-				player.ReferenceHub.characterClassManager.TargetConsolePrint(player.ReferenceHub.scp079PlayerScript.connectionToClient, "You are a Chaos Insurgency Spy! You are immune to MTF for now, but as soon as you damage an MTF, your spy immunity will turn off.\n\nHelp Chaos win the round and kill as many MTF and Scientists as you can!", "yellow");
-			} catch(Exception e)
+			}
+			catch(Exception e)
 			{
 				Log.Error(e);
+			}
+		}
+
+		private static void GrantSpyLoadout(Player player)
+		{
+			if (spyOriginalRole.ContainsKey(player))
+			{
+				InventorySystem.InventoryRoleInfo inventory = InventorySystem.Configs.StartingInventories.DefinedInventories[spyOriginalRole[player]];
+				player.ClearInventory();
+				for (int i = 0; i < inventory.Items.Length; i++)
+				{
+					ItemType type = inventory.Items[i];
+					if (type == ItemType.GrenadeHE && !CISpy.instance.Config.SpawnWithGrenade)
+					{
+						type = ItemType.GrenadeFlash;
+					}
+					player.AddItem(type);
+				}
+				player.AddItem(ItemType.KeycardChaosInsurgency);
+				Timing.CallDelayed(0.1f, () =>
+				{
+					for (int i = inventory.Ammo.Count - 1; i >= 0; i--)
+					{
+						var entry = inventory.Ammo.ElementAt(i);
+						player.Ammo[entry.Key] = entry.Value;
+					}
+					player.Inventory.SendAmmoNextFrame = true;
+				});
 			}
 		}
 
