@@ -242,7 +242,7 @@ namespace CISpy
 				!spies[ev.Attacker])
 			{
 				spies[ev.Attacker] = true;
-				ev.Attacker.Broadcast(8, "<size=60><b>You are now <color=red>vulnerable</color></b>\n<i>You have damaged an <color=#058df1>MTF</color> or <color=#ffff7c>Scientist</color></i>");
+				ev.Attacker.Broadcast(8, "<size=60><b>You are now <color=red>Vulnerable</color></b></size>\n<i>You have damaged an <color=#058df1>MTF</color> or <color=#ffff7c>Scientist</color></i>");
 			}
 			else if (spies.ContainsKey(ev.Target) && !spies.ContainsKey(ev.Attacker) && (ev.Attacker.Role.Team == Team.MTF || ev.Attacker.Role.Team == Team.RSC) && !spies[ev.Target])
 			{

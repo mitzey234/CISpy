@@ -96,20 +96,14 @@ namespace CISpy
 				if (spy.Key != null && spy.Key.IsAlive && spy.Key.IsConnected)
 				{
 					spy.Key.CurrentItem = default;
-					spy.Key.Broadcast(10, "<i>Your fellow <color=\"green\">Chaos Insurgency</color> have died.\nYou have been revealed!</i>");
+					spy.Key.Broadcast(10, "<size=60><b>You have been <color=red>Revealed</color></b></size>\nYour fellow <color=\"green\">Chaos Insurgency</color> have died");
+					//spy.Key.Broadcast(10, "<i>Your fellow <color=\"green\">Chaos Insurgency</color> have died.\nYou have been revealed!</i>");
 					MirrorExtensions.SendFakeSyncVar(spy.Key, spy.Key.ReferenceHub.networkIdentity, typeof(CharacterClassManager), nameof(CharacterClassManager.NetworkCurClass), (sbyte)RoleType.ChaosConscript);
 					spy.Key.ChangeAppearance(RoleType.ChaosConscript);
 					spiesRevealed = true;
 					spies[spy.Key] = true;
 				}
 			}
-		}
-
-		private int CountRoles(Team team, List<Player> pList)
-		{
-			int count = 0;
-			foreach (Player pl in pList) if (pl.Role.Team == team) count++;
-			return count;
 		}
 
 		private void CheckSpies(Player exclude = null)
