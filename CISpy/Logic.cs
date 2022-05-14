@@ -163,7 +163,7 @@ namespace CISpy
 					(!CiAlive && !ScpAlive && !DClassAlive && !ScientistsAlive && !MTFAlive && spyVulnerability.Count > 0)
 				)
 			{
-				//RevealSpies();
+				RevealSpies();
 			}
 		}
 
