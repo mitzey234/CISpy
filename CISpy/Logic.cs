@@ -41,7 +41,6 @@ namespace CISpy
 
 		private static void GrantSpyLoadout(Player player)
 		{
-			Log.Warn("granting: " + player.Nickname + " spy loadout");
 			if (spyOriginalRole.ContainsKey(player))
 			{
 				InventorySystem.InventoryRoleInfo inventory = InventorySystem.Configs.StartingInventories.DefinedInventories[spyOriginalRole[player]];

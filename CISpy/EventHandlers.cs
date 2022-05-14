@@ -152,7 +152,7 @@ namespace CISpy
 		public void OnSetClass(ChangingRoleEventArgs ev)
 		{
 			if (ev.NewRole == RoleType.Spectator) return;
-			Log.Warn(2);
+
 			// Case for respawn wave
 			if (!hasChosenSpy && teamRespawnQueue.Contains(ev.Player) && CISpy.instance.Config.SpyRoles.Contains(ev.NewRole))
 			{
@@ -164,7 +164,6 @@ namespace CISpy
 			// Case for any other spawn
 			else if (spyOriginalRole.ContainsKey(ev.Player))
 			{
-				Log.Warn("setting role");
 				ev.NewRole = spyRole;
 			}
 
@@ -186,7 +185,6 @@ namespace CISpy
 		{
 			if (spyVulnerability.ContainsKey(ev.Target))
 			{
-				Log.Warn("SPY DYING");
 				if (spyOriginalRole.ContainsKey(ev.Target)) spyOriginalRole.Remove(ev.Target);
 				spyVulnerability.Remove(ev.Target);
 			}
