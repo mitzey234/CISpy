@@ -83,21 +83,29 @@ namespace CISpy
 				List<RoleType> roleList = queue.ToList();
 
 				// index 0 is always commander -- skip
-				//int indx = rand.Next(1, ev.Players.Count);
-				int indx = rand.Next(0, ev.Players.Count);
+				//int indx = rand.Next(0, ev.Players.Count);
+				Log.Warn(1);
+				int indx = rand.Next(1, ev.Players.Count);
+				Log.Warn(2);
 				RoleType originalRole = roleList[indx];
+				Log.Warn(3);
 				roleList[indx] = RoleType.ChaosConscript;
-
+				Log.Warn(4);
 				for (int i = 0; i < ev.Players.Count; i++)
 				{
+					if (i == roleList.Count) break;
+					Log.Warn(5);
 					RoleType role = roleList[i];
+					Log.Warn(6);
 					Player player = ev.Players[i];
+					Log.Warn(7);
 					if (role == RoleType.ChaosConscript)
 					{
 						MakeSpy(player, role, originalRole, true, false);
 					}
 					else ev.Players[i].SetRole(role);
 				}
+				Log.Warn(8);
 
 				ServerLogs.AddLog(ServerLogs.Modules.ClassChange, string.Concat(new object[]
 				  {

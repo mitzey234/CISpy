@@ -106,6 +106,13 @@ namespace CISpy
 			}
 		}
 
+		private int CountRoles(Team team, List<Player> pList)
+		{
+			int count = 0;
+			foreach (Player pl in pList) if (pl.Role.Team == team) count++;
+			return count;
+		}
+
 		private void CheckSpies(Player exclude = null)
 		{
 			List<Player> scp035 = null;
@@ -119,8 +126,40 @@ namespace CISpy
 				Log.Debug("SCP-035 not installed, skipping method call...");
 			}
 
-			List<Player> pList = Player.Get(x => !scp035.Contains(x)).ToList();
-			if (pList.Where(x => x.Role.Team == Team.CHI).All(x => spies.ContainsKey(x)) && !pList.Any(x => x.Role == RoleType.ClassD))
+			List<Player> Serpents;
+			if (Loader.Plugins.Where(pl => pl.Name == "SerpentsHand").ToList().Count > 0)
+			{
+				try
+				{
+					Serpents = (List<Player>)Loader.Plugins.First(pl => pl.Name == "SerpentsHand").Assembly.GetType("SerpentsHand.API.SerpentsHand").GetMethod("GetSHPlayers", BindingFlags.Public | BindingFlags.Static).Invoke(null, null);
+				}
+				catch (System.Exception e)
+				{
+					Serpents = new List<Player>();
+				}
+			}
+			else
+			{
+				Serpents = new List<Player>();
+			}
+
+			List<Player> pList = Player.List.Where(x =>
+			!scp035.Contains(x) &&
+			!spies.ContainsKey(x)).ToList();
+
+			bool CiAlive = CountRoles(Team.CHI, pList) > 0;
+			bool ScpAlive = CountRoles(Team.SCP, pList) > 0 + scp035.Count + Serpents.Count;
+			bool DClassAlive = CountRoles(Team.CDP, pList) > 0;
+			bool ScientistsAlive = CountRoles(Team.RSC, pList) > 0;
+			bool MTFAlive = CountRoles(Team.MTF, pList) > 0;
+
+			//List<Player> pList = Player.Get(x => !scp035.Contains(x)).ToList();
+			//if (pList.Where(x => x.Role.Team == Team.CHI).All(x => spies.ContainsKey(x)) && !pList.Any(x => x.Role == RoleType.ClassD))
+			if  (
+					((ScpAlive || DClassAlive) && !ScientistsAlive && !MTFAlive) ||
+					((ScientistsAlive || MTFAlive) && !CiAlive && !ScpAlive && !DClassAlive) ||
+					(!CiAlive && !ScpAlive && !DClassAlive && !ScientistsAlive && !MTFAlive && spies.Count > 0)
+				)
 			{
 				RevealSpies();
 			}
