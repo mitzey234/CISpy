@@ -12,20 +12,21 @@ namespace CISpy
 {
 	partial class EventHandlers
 	{
-		internal static void MakeSpy(Player player, RoleType spyRole, RoleType originalRole, bool full = true, bool isVulnerable = false)
+		// full - spawns with loadout
+		internal static void MakeSpy(Player player, RoleType originalRole, bool isVulnerable = false, bool full = true, bool delayFull = false)
 		{
 			try
 			{
-				if (!spies.ContainsKey(player))
+				if (!spyVulnerability.ContainsKey(player))
 				{
 					Log.Warn("CREATING SPY: " + player.Nickname);
 
 					spawnPos.Add(player, SpawnpointManager.GetRandomPosition(RoleType.NtfPrivate).transform.position);
 					spyOriginalRole.Add(player, originalRole);
 
-					spies.Add(player, isVulnerable);
+					spyVulnerability.Add(player, isVulnerable);
 
-					player.SetRole(spyRole, Exiled.API.Enums.SpawnReason.Respawn);
+					//if (spawn) player.SetRole(spawnRole, Exiled.API.Enums.SpawnReason.Respawn);
 					player.Broadcast(10, "<i><size=60>You are a <b><color=\"green\">CISpy</color></b></size>\nCheck your console by pressing [`] or [~] for more info.</i>");
 					player.ReferenceHub.characterClassManager.TargetConsolePrint(player.ReferenceHub.scp079PlayerScript.connectionToClient, "You are a Chaos Insurgency Spy! You are immune to MTF for now, but as soon as you damage an MTF, your spy immunity will turn off.\n\nHelp Chaos win the round and kill as many MTF and Scientists as you can!", "yellow");
 
@@ -40,6 +41,7 @@ namespace CISpy
 
 		private static void GrantSpyLoadout(Player player)
 		{
+			Log.Warn("granting: " + player.Nickname + " spy loadout");
 			if (spyOriginalRole.ContainsKey(player))
 			{
 				InventorySystem.InventoryRoleInfo inventory = InventorySystem.Configs.StartingInventories.DefinedInventories[spyOriginalRole[player]];
@@ -90,18 +92,18 @@ namespace CISpy
 
 		private void RevealSpies()
 		{
-			for (int i = spies.Count - 1; i >= 0; i--)
+			for (int i = spyVulnerability.Count - 1; i >= 0; i--)
 			{
-				var spy = spies.ElementAt(i);
+				var spy = spyVulnerability.ElementAt(i);
 				if (spy.Key != null && spy.Key.IsAlive && spy.Key.IsConnected)
 				{
 					spy.Key.CurrentItem = default;
 					spy.Key.Broadcast(10, "<size=60><b>You have been <color=red>Revealed</color></b></size>\nYour fellow <color=\"green\">Chaos Insurgency</color> have died");
 					//spy.Key.Broadcast(10, "<i>Your fellow <color=\"green\">Chaos Insurgency</color> have died.\nYou have been revealed!</i>");
-					MirrorExtensions.SendFakeSyncVar(spy.Key, spy.Key.ReferenceHub.networkIdentity, typeof(CharacterClassManager), nameof(CharacterClassManager.NetworkCurClass), (sbyte)RoleType.ChaosConscript);
-					spy.Key.ChangeAppearance(RoleType.ChaosConscript);
+					MirrorExtensions.SendFakeSyncVar(spy.Key, spy.Key.ReferenceHub.networkIdentity, typeof(CharacterClassManager), nameof(CharacterClassManager.NetworkCurClass), (sbyte)spyRole);
+					spy.Key.ChangeAppearance(spyRole);
 					spiesRevealed = true;
-					spies[spy.Key] = true;
+					spyVulnerability[spy.Key] = true;
 				}
 			}
 		}
@@ -145,7 +147,7 @@ namespace CISpy
 
 			List<Player> pList = Player.List.Where(x =>
 			!scp035.Contains(x) &&
-			!spies.ContainsKey(x)).ToList();
+			!spyVulnerability.ContainsKey(x)).ToList();
 
 			bool CiAlive = CountRoles(Team.CHI, pList) > 0;
 			bool ScpAlive = CountRoles(Team.SCP, pList) > 0 + scp035.Count + Serpents.Count;
@@ -158,10 +160,10 @@ namespace CISpy
 			if  (
 					((ScpAlive || DClassAlive) && !ScientistsAlive && !MTFAlive) ||
 					((ScientistsAlive || MTFAlive) && !CiAlive && !ScpAlive && !DClassAlive) ||
-					(!CiAlive && !ScpAlive && !DClassAlive && !ScientistsAlive && !MTFAlive && spies.Count > 0)
+					(!CiAlive && !ScpAlive && !DClassAlive && !ScientistsAlive && !MTFAlive && spyVulnerability.Count > 0)
 				)
 			{
-				RevealSpies();
+				//RevealSpies();
 			}
 		}
 

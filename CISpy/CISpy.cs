@@ -1,7 +1,6 @@
 ﻿using Exiled.API.Features;
 using Exiled.Loader;
 using HarmonyLib;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
@@ -18,12 +17,10 @@ namespace CISpy
 
 		private bool state = false;
 
-		public static List<int> FFGrants = new List<int>();
-
 		public override void OnEnabled() 
 		{
 			if (state) return;
-			hInstance = new Harmony("cm.cispy");
+			hInstance = new Harmony("cyanox.cispy");
 			instance = this;
 			hInstance.PatchAll();
 
@@ -43,8 +40,6 @@ namespace CISpy
 			Exiled.Events.Handlers.Player.Spawned += ev.OnSpawned;
 			Exiled.Events.Handlers.Player.Shooting += ev.OnShoot;
 			Exiled.Events.Handlers.Player.Verified += ev.OnPlayerJoin;
-
-			FFGrants = new List<int>();
 
 			state = true;
 			base.OnEnabled();
@@ -71,8 +66,6 @@ namespace CISpy
 			Exiled.Events.Handlers.Player.Verified -= ev.OnPlayerJoin;
 
 			ev = null;
-
-			FFGrants = null;
 
 			state = false;
 			base.OnDisabled();

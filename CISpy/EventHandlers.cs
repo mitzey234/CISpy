@@ -13,9 +13,23 @@ namespace CISpy
 {
 	partial class EventHandlers
 	{
+		// The "true" role for a spy
+		internal static RoleType spyRole = RoleType.ChaosConscript;
+
+		// Save the "fake" roles for each player
 		internal static Dictionary<Player, RoleType> spyOriginalRole = new Dictionary<Player, RoleType>();
+
+		// Queue for granting loadouts due to a needed delay
 		internal static Queue<Player> spyLoadoutQueue = new Queue<Player>();
-		internal static Dictionary<Player, bool> spies = new Dictionary<Player, bool> ();
+
+		// TeamRespawnQueue
+		internal static List<Player> teamRespawnQueue = new List<Player>();
+		internal static bool hasChosenSpy = false;
+
+		// Dictionary saving whether or not a spy is vulnerable
+		internal static Dictionary<Player, bool> spyVulnerability = new Dictionary<Player, bool> ();
+
+		// Queue for spawning spies in the proper place
 		internal static Dictionary<Player, Vector3> spawnPos = new Dictionary<Player, Vector3>();
 
 		private bool spiesRevealed = false;
@@ -24,20 +38,21 @@ namespace CISpy
 
 		public void OnRoundStart()
 		{
-			spies.Clear();
+			spyVulnerability.Clear();
 			spyOriginalRole.Clear();
 			spyLoadoutQueue.Clear();
 			spawnPos.Clear();
+			teamRespawnQueue.Clear();
 			spiesRevealed = false;
-			CISpy.FFGrants.Clear();
-			/*if (rand.Next(1, 100) < CISpy.instance.Config.GuardSpawnChance)
+			hasChosenSpy = true;
+			if (rand.Next(100) < CISpy.instance.Config.GuardSpawnChance)
 			{
-				Player player = Player.List.FirstOrDefault(x => x.Role == RoleType.FacilityGuard);
+				Player player = Player.List.FirstOrDefault(x => x != null && x.Role == RoleType.FacilityGuard);
 				if (player != null)
 				{
 					MakeSpy(player, RoleType.FacilityGuard);
 				}
-			}*/
+			}
 		}
 
 		public void OnSpawning(SpawningEventArgs ev)
@@ -59,11 +74,11 @@ namespace CISpy
 
 		public void OnPlayerJoin(VerifiedEventArgs ev)
 		{
-			foreach (var entry in spies)
+			foreach (var entry in spyVulnerability)
 			{
 				if (spiesRevealed)
 				{
-					MirrorExtensions.SendFakeSyncVar(ev.Player, entry.Key.ReferenceHub.networkIdentity, typeof(CharacterClassManager), nameof(CharacterClassManager.NetworkCurClass), (sbyte)RoleType.ChaosConscript);
+					MirrorExtensions.SendFakeSyncVar(ev.Player, entry.Key.ReferenceHub.networkIdentity, typeof(CharacterClassManager), nameof(CharacterClassManager.NetworkCurClass), (sbyte)spyRole);
 				}
 				else if (spyOriginalRole.ContainsKey(entry.Key))
 				{
@@ -76,61 +91,10 @@ namespace CISpy
 		{
 			if (ev.NextKnownTeam == SpawnableTeamType.NineTailedFox && rand.Next(1, 100) < CISpy.instance.Config.SpawnChance && ev.Players.Count >= CISpy.instance.Config.MinimumSquadSize)
 			{
-				ev.IsAllowed = false;
-				Queue<RoleType> queue = new Queue<RoleType>();
-				RespawnWaveGenerator.SpawnableTeams.TryGetValue(ev.NextKnownTeam, out var spawnableTeamHandlerBase);
-				spawnableTeamHandlerBase.GenerateQueue(queue, ev.Players.Count);
-				List<RoleType> roleList = queue.ToList();
-
-				// index 0 is always commander -- skip
-				//int indx = rand.Next(0, ev.Players.Count);
-				Log.Warn(1);
-				int indx = rand.Next(1, ev.Players.Count);
-				Log.Warn(2);
-				RoleType originalRole = roleList[indx];
-				Log.Warn(3);
-				roleList[indx] = RoleType.ChaosConscript;
-				Log.Warn(4);
-				for (int i = 0; i < ev.Players.Count; i++)
-				{
-					if (i == roleList.Count) break;
-					Log.Warn(5);
-					RoleType role = roleList[i];
-					Log.Warn(6);
-					Player player = ev.Players[i];
-					Log.Warn(7);
-					if (role == RoleType.ChaosConscript)
-					{
-						MakeSpy(player, role, originalRole, true, false);
-					}
-					else ev.Players[i].SetRole(role);
-				}
-				Log.Warn(8);
-
-				ServerLogs.AddLog(ServerLogs.Modules.ClassChange, string.Concat(new object[]
-				  {
-					"RespawnManager has successfully spawned ",
-					ev.Players.Count,
-					" players as ",
-					ev.NextKnownTeam.ToString(),
-					"!"
-				  }), ServerLogs.ServerLogType.GameEvent, false);
-				RespawnTickets.Singleton.GrantTickets(SpawnableTeamType.NineTailedFox, -roleList.Count * spawnableTeamHandlerBase.TicketRespawnCost, false);
-				Respawning.NamingRules.UnitNamingRule unitNamingRule;
-				if (Respawning.NamingRules.UnitNamingRules.TryGetNamingRule(SpawnableTeamType.NineTailedFox, out unitNamingRule))
-				{
-					string text;
-					unitNamingRule.GenerateNew(ev.NextKnownTeam, out text);
-					foreach (ReferenceHub referenceHub2 in ev.Players.Select(x => x.ReferenceHub))
-					{
-						referenceHub2.characterClassManager.NetworkCurSpawnableTeamType = (byte)ev.NextKnownTeam;
-						referenceHub2.characterClassManager.NetworkCurUnitName = text;
-					}
-					unitNamingRule.PlayEntranceAnnouncement(text);
-				}
-				RespawnEffectsController.ExecuteAllEffects(RespawnEffectsController.EffectType.UponRespawn, ev.NextKnownTeam);
+				teamRespawnQueue = new List<Player>(ev.Players);
+				teamRespawnQueue.ShuffleList();
+				hasChosenSpy = false;
 			}
-			RespawnManager.Singleton.NextKnownTeam = SpawnableTeamType.None;
 		}
 
 		public void OnRoundEnded(RoundEndedEventArgs ev)
@@ -154,7 +118,7 @@ namespace CISpy
 
 			if (scp035 != null && scp035.Contains(ev.Shooter)) return;
 
-			if (target != null && spies.ContainsKey(target))
+			if (target != null && spyVulnerability.ContainsKey(target))
 			{
 				if (ev.Shooter.Role.Team != Team.RSC && ev.Shooter.Role.Team != Team.MTF)
 				{
@@ -164,7 +128,7 @@ namespace CISpy
 						CISpy.AccessHintSystem(ev.Shooter, hint, 2f, 0);
 					}
 				}
-				else if (!spies[target])
+				else if (!spyVulnerability[target])
 				{
 					ev.IsAllowed = false;
 					if (ev.Shooter.CurrentItem is Firearm firearm)
@@ -177,9 +141,9 @@ namespace CISpy
 
 		public void OnEscaping(EscapingEventArgs ev)
 		{
-			if (ev.Player.Role == RoleType.ClassD && ev.Player.IsCuffed && spies.ContainsKey(ev.Player.Cuffer))
+			if (ev.Player.Role == RoleType.ClassD && ev.Player.IsCuffed && spyVulnerability.ContainsKey(ev.Player.Cuffer))
 			{
-				MakeSpy(ev.Player, RoleType.ChaosConscript, ev.NewRole);
+				MakeSpy(ev.Player, spyRole);
 				RoundSummary.EscapedScientists--;
 				RoundSummary.EscapedClassD++;
 			}
@@ -187,14 +151,32 @@ namespace CISpy
 
 		public void OnSetClass(ChangingRoleEventArgs ev)
 		{
+			if (ev.NewRole == RoleType.Spectator) return;
+			Log.Warn(2);
+			// Case for respawn wave
+			if (!hasChosenSpy && teamRespawnQueue.Contains(ev.Player) && CISpy.instance.Config.SpyRoles.Contains(ev.NewRole))
+			{
+				MakeSpy(ev.Player, ev.NewRole);
+				ev.NewRole = spyRole;
+				teamRespawnQueue.Clear();
+				hasChosenSpy = true;
+			}
+			// Case for any other spawn
+			else if (spyOriginalRole.ContainsKey(ev.Player))
+			{
+				Log.Warn("setting role");
+				ev.NewRole = spyRole;
+			}
+
 			if (spawnPos.ContainsKey(ev.Player))
 			{
 				ev.Ammo.Clear();
+				ev.Player.Inventory.SendAmmoNextFrame = true;
 			}
-			if (ev.Reason == Exiled.API.Enums.SpawnReason.ForceClass && spies.ContainsKey(ev.Player))
+			if (ev.Reason == Exiled.API.Enums.SpawnReason.ForceClass && spyVulnerability.ContainsKey(ev.Player))
 			{
 				spyOriginalRole.Remove(ev.Player);
-				Timing.CallDelayed(0.1f, () => spies.Remove(ev.Player));
+				Timing.CallDelayed(0.1f, () => spyVulnerability.Remove(ev.Player));
 			}
 		}
 
@@ -202,14 +184,15 @@ namespace CISpy
 
 		public void OnPlayerDie(DiedEventArgs ev)
 		{
-			if (spies.ContainsKey(ev.Target))
+			if (spyVulnerability.ContainsKey(ev.Target))
 			{
+				Log.Warn("SPY DYING");
 				if (spyOriginalRole.ContainsKey(ev.Target)) spyOriginalRole.Remove(ev.Target);
-				spies.Remove(ev.Target);
+				spyVulnerability.Remove(ev.Target);
 			}
-			if (ev.Target != null && ev.Killer != null && spies.ContainsKey(ev.Killer) && (ev.Target.Role == RoleType.Scientist || ev.Target.Role == RoleType.NtfCaptain || ev.Target.Role == RoleType.NtfPrivate || ev.Target.Role == RoleType.NtfSergeant || ev.Target.Role == RoleType.NtfSpecialist || ev.Target.Role == RoleType.FacilityGuard))
+			if (ev.Target != null && ev.Killer != null && spyVulnerability.ContainsKey(ev.Killer) && (ev.Target.Role == RoleType.Scientist || ev.Target.Role == RoleType.NtfCaptain || ev.Target.Role == RoleType.NtfPrivate || ev.Target.Role == RoleType.NtfSergeant || ev.Target.Role == RoleType.NtfSpecialist || ev.Target.Role == RoleType.FacilityGuard))
             {
-				RespawnTickets.Singleton._tickets[Respawning.SpawnableTeamType.ChaosInsurgency]++;
+				RespawnTickets.Singleton._tickets[SpawnableTeamType.ChaosInsurgency]++;
             }
 			CheckSpies(ev.Target);
 		}
@@ -221,8 +204,8 @@ namespace CISpy
 
 		public void OnHandcuffing(HandcuffingEventArgs ev)
 		{
-			if ((spies.ContainsKey(ev.Target) && ev.Cuffer.Role.Team == Team.CHI) ||
-				(spies.ContainsKey(ev.Cuffer) && ev.Target.Role.Team == Team.CHI))
+			if ((spyVulnerability.ContainsKey(ev.Target) && ev.Cuffer.Role.Team == Team.CHI) ||
+				(spyVulnerability.ContainsKey(ev.Cuffer) && ev.Target.Role.Team == Team.CHI))
 			{
 				ev.IsAllowed = false;
 			}
@@ -243,16 +226,16 @@ namespace CISpy
 
 			if (ev.Attacker == null || ev.Target == null) return;
 
-			if (spies.ContainsKey(ev.Attacker) &&
-				!spies.ContainsKey(ev.Target) &&
+			if (spyVulnerability.ContainsKey(ev.Attacker) &&
+				!spyVulnerability.ContainsKey(ev.Target) &&
 				(ev.Target.Role.Team == Team.RSC || ev.Target.Role.Team == Team.MTF) &&
 				!scp035.Contains(ev.Target) &&
-				!spies[ev.Attacker])
+				!spyVulnerability[ev.Attacker])
 			{
-				spies[ev.Attacker] = true;
+				spyVulnerability[ev.Attacker] = true;
 				ev.Attacker.Broadcast(8, "<size=60><b>You are now <color=red>Vulnerable</color></b></size>\n<i>You have damaged an <color=#058df1>MTF</color> or <color=#ffff7c>Scientist</color></i>");
 			}
-			else if (spies.ContainsKey(ev.Target) && !spies.ContainsKey(ev.Attacker) && (ev.Attacker.Role.Team == Team.MTF || ev.Attacker.Role.Team == Team.RSC) && !spies[ev.Target])
+			else if (spyVulnerability.ContainsKey(ev.Target) && !spyVulnerability.ContainsKey(ev.Attacker) && (ev.Attacker.Role.Team == Team.MTF || ev.Attacker.Role.Team == Team.RSC) && !spyVulnerability[ev.Target])
 			{
 				ev.IsAllowed = false;
 			} 

@@ -7,12 +7,12 @@ namespace CISpy.API
 	{
 		public static Dictionary<Player, bool> GetSpies()
 		{
-			return EventHandlers.spies;
+			return EventHandlers.spyVulnerability;
 		}
 
-		public static void MakeSpy(Player player, RoleType spyRole, RoleType originalRole, bool full = false, bool isVulenrable  = true)
+		public static void MakeSpy(Player player, RoleType originalRole, bool isVulnerable = false, bool full = true)
 		{
-			EventHandlers.MakeSpy(player, spyRole, originalRole, full, isVulenrable);
+			EventHandlers.MakeSpy(player, originalRole, isVulnerable, full);
 		}
 	}
 }
