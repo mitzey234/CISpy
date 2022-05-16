@@ -74,7 +74,7 @@ namespace CISpy
 
 		public void OnTeslaGate(TriggeringTeslaEventArgs ev)
 		{
-			if (spyVulnerability.ContainsKey(ev.Player))
+			if (spyVulnerability.ContainsKey(ev.Player) && !spiesRevealed)
 			{
 				ev.IsTriggerable = false;
 				ev.IsInIdleRange = false;
