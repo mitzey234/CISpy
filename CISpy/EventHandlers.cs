@@ -160,6 +160,12 @@ namespace CISpy
 
 		public void OnSetClass(ChangingRoleEventArgs ev)
 		{
+			if (ev.Reason == Exiled.API.Enums.SpawnReason.ForceClass && spyVulnerability.ContainsKey(ev.Player))
+			{
+				spyOriginalRole.Remove(ev.Player);
+				Timing.CallDelayed(0.1f, () => spyVulnerability.Remove(ev.Player));
+			}
+
 			if (ev.NewRole == RoleType.Spectator) return;
 
 			// Case for respawn wave
@@ -180,11 +186,6 @@ namespace CISpy
 			{
 				ev.Ammo.Clear();
 				ev.Player.Inventory.SendAmmoNextFrame = true;
-			}
-			if (ev.Reason == Exiled.API.Enums.SpawnReason.ForceClass && spyVulnerability.ContainsKey(ev.Player))
-			{
-				spyOriginalRole.Remove(ev.Player);
-				Timing.CallDelayed(0.1f, () => spyVulnerability.Remove(ev.Player));
 			}
 		}
 
