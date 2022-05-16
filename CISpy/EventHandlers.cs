@@ -72,6 +72,15 @@ namespace CISpy
 			}
 		}
 
+		public void OnTeslaGate(TriggeringTeslaEventArgs ev)
+		{
+			if (spyVulnerability.ContainsKey(ev.Player))
+			{
+				ev.IsTriggerable = false;
+				ev.IsInIdleRange = false;
+			}
+		}
+
 		public void OnPlayerJoin(VerifiedEventArgs ev)
 		{
 			foreach (var entry in spyVulnerability)

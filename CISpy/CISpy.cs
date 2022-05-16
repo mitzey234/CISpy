@@ -40,6 +40,7 @@ namespace CISpy
 			Exiled.Events.Handlers.Player.Spawned += ev.OnSpawned;
 			Exiled.Events.Handlers.Player.Shooting += ev.OnShoot;
 			Exiled.Events.Handlers.Player.Verified += ev.OnPlayerJoin;
+			Exiled.Events.Handlers.Player.TriggeringTesla += ev.OnTeslaGate;
 
 			state = true;
 			base.OnEnabled();
@@ -64,6 +65,7 @@ namespace CISpy
 			Exiled.Events.Handlers.Player.Spawned -= ev.OnSpawned;
 			Exiled.Events.Handlers.Player.Shooting -= ev.OnShoot;
 			Exiled.Events.Handlers.Player.Verified -= ev.OnPlayerJoin;
+			Exiled.Events.Handlers.Player.TriggeringTesla -= ev.OnTeslaGate;
 
 			ev = null;
 

@@ -57,6 +57,7 @@ namespace CISpy
 				player.AddItem(ItemType.KeycardChaosInsurgency);
 				Timing.CallDelayed(0.1f, () =>
 				{
+					player.Ammo.Clear();
 					for (int i = inventory.Ammo.Count - 1; i >= 0; i--)
 					{
 						var entry = inventory.Ammo.ElementAt(i);
