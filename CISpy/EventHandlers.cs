@@ -198,10 +198,10 @@ namespace CISpy
 				if (spyOriginalRole.ContainsKey(ev.Target)) spyOriginalRole.Remove(ev.Target);
 				spyVulnerability.Remove(ev.Target);
 			}
-			if (ev.Target != null && ev.Killer != null && spyVulnerability.ContainsKey(ev.Killer) && (ev.Target.Role == RoleType.Scientist || ev.Target.Role == RoleType.NtfCaptain || ev.Target.Role == RoleType.NtfPrivate || ev.Target.Role == RoleType.NtfSergeant || ev.Target.Role == RoleType.NtfSpecialist || ev.Target.Role == RoleType.FacilityGuard))
+			/*if (ev.Target != null && ev.Killer != null && spyVulnerability.ContainsKey(ev.Killer) && (ev.Target.Role == RoleType.Scientist || ev.Target.Role == RoleType.NtfCaptain || ev.Target.Role == RoleType.NtfPrivate || ev.Target.Role == RoleType.NtfSergeant || ev.Target.Role == RoleType.NtfSpecialist || ev.Target.Role == RoleType.FacilityGuard))
             {
 				RespawnTickets.Singleton._tickets[SpawnableTeamType.ChaosInsurgency]++;
-            }
+            }*/
 			CheckSpies(ev.Target);
 		}
 
