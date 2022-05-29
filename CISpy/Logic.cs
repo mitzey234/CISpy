@@ -92,18 +92,21 @@ namespace CISpy
 
 		private void RevealSpies()
 		{
-			for (int i = spyVulnerability.Count - 1; i >= 0; i--)
+			if (!spiesRevealed)
 			{
-				var spy = spyVulnerability.ElementAt(i);
-				if (spy.Key != null && spy.Key.IsAlive && spy.Key.IsConnected)
+				for (int i = spyVulnerability.Count - 1; i >= 0; i--)
 				{
-					spy.Key.CurrentItem = default;
-					spy.Key.Broadcast(10, "<size=60><b>You have been <color=red>Revealed</color></b></size>\nYour fellow <color=\"green\">Chaos Insurgency</color> have died");
-					//spy.Key.Broadcast(10, "<i>Your fellow <color=\"green\">Chaos Insurgency</color> have died.\nYou have been revealed!</i>");
-					MirrorExtensions.SendFakeSyncVar(spy.Key, spy.Key.ReferenceHub.networkIdentity, typeof(CharacterClassManager), nameof(CharacterClassManager.NetworkCurClass), (sbyte)spyRole);
-					spy.Key.ChangeAppearance(spyRole);
-					spiesRevealed = true;
-					spyVulnerability[spy.Key] = true;
+					var spy = spyVulnerability.ElementAt(i);
+					if (spy.Key != null && spy.Key.IsAlive && spy.Key.IsConnected)
+					{
+						spy.Key.CurrentItem = default;
+						spy.Key.Broadcast(10, "<size=60><b>You have been <color=red>Revealed</color></b></size>\nYour fellow <color=\"green\">Chaos Insurgency</color> have died");
+						//spy.Key.Broadcast(10, "<i>Your fellow <color=\"green\">Chaos Insurgency</color> have died.\nYou have been revealed!</i>");
+						MirrorExtensions.SendFakeSyncVar(spy.Key, spy.Key.ReferenceHub.networkIdentity, typeof(CharacterClassManager), nameof(CharacterClassManager.NetworkCurClass), (sbyte)spyRole);
+						spy.Key.ChangeAppearance(spyRole);
+						spiesRevealed = true;
+						spyVulnerability[spy.Key] = true;
+					}
 				}
 			}
 		}

@@ -152,7 +152,7 @@ namespace CISpy
 		{
 			if (ev.Player.Role == RoleType.ClassD && ev.Player.IsCuffed && spyVulnerability.ContainsKey(ev.Player.Cuffer))
 			{
-				MakeSpy(ev.Player, spyRole);
+				MakeSpy(ev.Player, ev.NewRole);
 				RoundSummary.EscapedScientists--;
 				RoundSummary.EscapedClassD++;
 			}
